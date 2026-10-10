@@ -4,6 +4,8 @@ WORKDIR /app
 RUN addgroup --system xilac && adduser --system --ingroup xilac xilac
 COPY pyproject.toml README.md ./
 COPY core ./core
+COPY migrations ./migrations
+COPY scripts ./scripts
 RUN pip install --no-cache-dir .
 USER xilac
 EXPOSE 8000
