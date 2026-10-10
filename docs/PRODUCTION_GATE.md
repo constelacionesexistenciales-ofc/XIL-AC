@@ -12,6 +12,9 @@
 - [x] Contenedor no-root y puerto local enlazado a localhost.
 
 ## Bloqueos antes de exponer a usuarios
+- [ ] Validar el prototipo local sin red y comprobar con evidencia que inspeccionar, limpiar y cancelar no transmiten datos.
+- [ ] Construir una aplicación de escritorio instalable con motor local y política de salida; el prototipo HTML no es una llave obligatoria.
+- [ ] Probar el cliente en los sistemas operativos objetivo y verificar firma, actualización y recuperación.
 - [ ] Crear una interfaz local que ejecute el detector antes de transmitir contenido.
 - [ ] Medir falsos positivos y falsos negativos con un conjunto de pruebas sintético representativo.
 - [ ] Configurar y verificar un proveedor OIDC real y limitar el acceso a Alexis.
@@ -21,6 +24,9 @@
 - [ ] Probar copias de seguridad, restauración, permisos, aislamiento, seguridad y carga.
 - [ ] Desplegar en infraestructura real y verificar TLS, base de datos y recuperación.
 - [ ] Obtener aprobación humana explícita antes de habilitar el uso real.
+
+## Arquitectura local en preparación
+La rama de desarrollo incorpora un prototipo HTML local y documentación de la arquitectura de una futura puerta instalable. Todavía no es un ejecutable instalable, no intercepta otras aplicaciones y no impide que el usuario copie contenido a otros servicios. La puerta remota continúa cerrada.
 
 ## Limitaciones conocidas
 - El detector es heurístico; no garantiza detectar todo dato sensible ni determina que el contenido sea seguro.
