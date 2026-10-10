@@ -8,7 +8,7 @@
 
 **High internal capability, low external complexity.** Research should feel clear, fast, visually considered, and easy to navigate on mobile. The interface approved by the product owner in ChatGPT's research response is the quality reference: clear hierarchy, relevant imagery, concise synthesis, useful visual structure, and deeper detail available without overwhelming the first view.
 
-This document defines the target experience. It does not claim that a production frontend already exists or that these requirements have been implemented.
+The current code is an interactive static prototype. It does not claim that a production frontend, connected research engine, or complete set of acceptance criteria has been delivered.
 
 ## 1. Universal research shell
 
