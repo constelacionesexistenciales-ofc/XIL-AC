@@ -1,8 +1,10 @@
 from fastapi.testclient import TestClient
 
-from core.api import app
+import core.auth as auth
+import core.api as api
+from core.config import Settings
 
-client = TestClient(app)
+client = TestClient(api.app)
 
 
 def test_liveness_is_public_and_minimal():
@@ -36,6 +38,7 @@ def test_process_rejects_wrong_token(monkeypatch):
 
 def test_process_does_not_claim_engine_is_implemented(monkeypatch):
     monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
     response = client.post(
         "/v1/process",
         headers={"Authorization": "Bearer test-secret"},
@@ -43,3 +46,53 @@ def test_process_does_not_claim_engine_is_implemented(monkeypatch):
     )
     assert response.status_code == 501
     assert response.json()["status"] == "not_implemented"
+
+
+def test_process_fails_closed_when_audit_storage_fails(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+
+    def fail_audit(*args):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(api, "record_audit_event", fail_audit)
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"text": "texto privado"},
+    )
+    assert response.status_code == 503
+    assert "auditoría" in response.json()["detail"]
+
+
+def test_oidc_role_without_permission_is_denied(monkeypatch):
+    monkeypatch.setattr(
+        auth,
+        "settings",
+        Settings(
+            environment="staging",
+            oidc_issuer="https://identity.example.test/",
+            oidc_audience="xilac-api",
+            oidc_jwks_url="https://identity.example.test/.well-known/jwks.json",
+        ),
+    )
+    monkeypatch.setattr(
+        auth,
+        "_verify_oidc_token",
+        lambda *args: {"sub": "consultant-1", "roles": ["auditor"]},
+    )
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer valid-test-token"},
+        json={"text": "texto privado"},
+    )
+    assert response.status_code == 403
+
+
+def test_oidc_missing_configuration_fails_closed(monkeypatch):
+    monkeypatch.setattr(auth, "settings", Settings(environment="staging"))
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer token"},
+        json={"text": "texto privado"},
+    )
+    assert response.status_code == 503

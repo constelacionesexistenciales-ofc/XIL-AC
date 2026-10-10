@@ -1,16 +1,15 @@
-"""API mínima de XIL-AC: autenticación fail-closed y comprobaciones honestas."""
+"""API mínima de XIL-AC con control de roles, auditoría y respuestas honestas."""
 from __future__ import annotations
 
-import hmac
-import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from core.audit import record_audit_event
+from core.auth import Principal, require_roles
 from core.config import Settings
 from core.db import check_database
 from core.trace import new_trace
@@ -26,7 +25,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.2.0",
+    version="0.3.0",
     docs_url=None if settings.environment == "production" else "/docs",
     redoc_url=None,
     lifespan=lifespan,
@@ -36,25 +35,6 @@ app = FastAPI(
 class ProcessRequest(BaseModel):
     text: str = Field(min_length=1, max_length=100_000)
     mode: str = Field(default="session_support", pattern="^(session_support|report_draft)$")
-
-
-def require_token(authorization: Annotated[str | None, Header()] = None) -> None:
-    expected = os.getenv("XILAC_API_TOKEN", "")
-    if not expected:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Servicio protegido no configurado",
-        )
-    supplied = authorization or ""
-    prefix = "Bearer "
-    if not supplied.startswith(prefix) or not hmac.compare_digest(
-        supplied[len(prefix):], expected
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales inválidas",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
 
 @app.get("/health/live")
@@ -76,12 +56,27 @@ def ready() -> dict[str, str]:
     return {"status": "ready", "database": "available"}
 
 
-@app.post("/v1/process", dependencies=[Depends(require_token)])
-def process(request: ProcessRequest) -> JSONResponse:
-    # No simular procesamiento ni registrar la transcripción: el motor CFE
-    # debe conectarse y probarse antes de habilitar este endpoint.
+@app.post("/v1/process")
+def process(
+    request: ProcessRequest,
+    principal: Principal = Depends(require_roles("facilitator", "admin")),
+) -> JSONResponse:
+    # No registrar la transcripción: solo se conserva un evento técnico mínimo.
     _ = request.mode, request.text
     trace = new_trace()
+    try:
+        record_audit_event(
+            trace.execution_id,
+            "process.request",
+            principal.subject,
+            "engine_not_implemented",
+        )
+    except Exception:
+        # No ejecutar operaciones sensibles si la auditoría no puede persistirse.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo registrar la auditoría; la solicitud fue bloqueada.",
+        ) from None
     return JSONResponse(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         content={

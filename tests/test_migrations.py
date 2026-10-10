@@ -1,8 +1,10 @@
 import os
+from uuid import uuid4
 
 import psycopg
 import pytest
 
+from core.audit import record_audit_event
 from scripts.migrate import main
 
 
@@ -30,3 +32,25 @@ def test_migrations_apply_idempotently_to_postgresql(monkeypatch):
 
     assert version == ("0001_initial",)
     assert table == ("audit_events",)
+
+
+def test_audit_event_persists_without_session_content(monkeypatch):
+    dsn = os.getenv("TEST_DATABASE_URL")
+    if not dsn:
+        pytest.skip("TEST_DATABASE_URL no está configurada")
+    monkeypatch.setenv("DATABASE_URL", dsn)
+    execution_id = str(uuid4())
+
+    record_audit_event(execution_id, "test.event", "test-actor", "ok")
+
+    with psycopg.connect(dsn) as conn:
+        event = conn.execute(
+            """
+            SELECT execution_id::text, event_type, actor_id, outcome
+            FROM audit_events
+            WHERE execution_id = %s
+            """,
+            (execution_id,),
+        ).fetchone()
+
+    assert event == (execution_id, "test.event", "test-actor", "ok")
