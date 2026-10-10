@@ -1,7 +1,7 @@
-# Puerta de producción — XIL-AC 0.3.1
+# Puerta de producción — XIL-AC 0.3.2
 
 ## Estado actual
-**NO APTO PARA PRODUCCIÓN REAL NI PARA SESIONES REALES EN LA API REMOTA.** Esta versión añade controles de identidad, auditoría, tamaño de solicitud y bloqueo por defecto; no conecta el motor CFE ni despliega el servicio.
+**NO APTO PARA PRODUCCIÓN REAL NI PARA SESIONES REALES EN LA API REMOTA.** Esta versión estandariza el recordatorio preventivo de privacidad y conserva el bloqueo por defecto; no conecta el motor CFE ni despliega el servicio.
 
 ## Controles construidos
 - [x] CI con análisis estático y pruebas automatizadas.
@@ -14,6 +14,7 @@
 - [x] Bloqueo de solicitudes si falla la persistencia de auditoría.
 - [x] Límite del cuerpo HTTP de 256 KiB.
 - [x] Contenedor no-root y puerto local enlazado a localhost.
+- [x] Aviso preventivo estandarizado cuando el procesamiento remoto está deshabilitado.
 
 ## Bloqueos antes de exponer a usuarios
 - [ ] Configurar proveedor OIDC real, emisor, audiencia, JWKS y claims de roles; probar tokens reales.
@@ -29,16 +30,15 @@
 - [ ] Obtener aprobación humana explícita antes de habilitar el uso real.
 
 ## Limitaciones conocidas
-- `POST /v1/process` responde HTTP 501: el motor CFE no está conectado.
+- `POST /v1/process` responde HTTP 423 mientras la compuerta de sesiones está cerrada; si se abre manualmente, responde HTTP 501 porque el motor CFE no está conectado.
 - La configuración OIDC está implementada, pero todavía no está probada contra un proveedor real.
 - El control de roles usa el claim configurable indicado; la estructura real del token depende del proveedor.
 - El esquema y la escritura de auditoría están conectados, pero faltan políticas de retención y una vista administrativa protegida.
+- El aviso de privacidad es preventivo: no hay un detector automático fiable de información sensible.
 - No hay gestor de secretos, limitación distribuida ni despliegue cloud.
 
 ## Criterio de aprobación
 No declarar producción habilitada hasta que cada bloqueo aplicable tenga evidencia verificable, revisión y aprobación de la persona responsable.
 
-
 ## Preproducción privada
-
-El plan se encuentra en [PREPRODUCCION_PRIVADA.md](PREPRODUCCION_PRIVADA.md). El archivo `render.yaml` es una plantilla; no prueba que exista un despliegue. La API `POST /v1/process` sigue respondiendo HTTP 501 y no debe recibir sesiones reales. Antes de habilitarlas, integrar el motor CFE, verificar OIDC con una identidad autorizada, documentar el tratamiento de datos y probar copias cifradas y restauración.
+El plan se encuentra en [PREPRODUCCION_PRIVADA.md](PREPRODUCCION_PRIVADA.md). El archivo `render.yaml` es una plantilla; no prueba que exista un despliegue. La API `POST /v1/process` permanece bloqueada y no debe recibir sesiones reales. Antes de habilitarlas, integrar el motor CFE, verificar OIDC con una identidad autorizada, documentar el tratamiento de datos y probar copias cifradas y restauración.
