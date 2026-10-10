@@ -48,6 +48,13 @@ def _claim_value(claims: dict, dotted_path: str):
 def get_current_principal(
     authorization: Annotated[str | None, Header()] = None,
 ) -> Principal:
+    local_token = os.getenv("XILAC_API_TOKEN", "")
+    if settings.environment not in {"staging", "production"} and not local_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Token local no configurado",
+        )
+
     supplied = authorization or ""
     prefix = "Bearer "
     if not supplied.startswith(prefix) or not supplied[len(prefix):].strip():
@@ -91,13 +98,7 @@ def get_current_principal(
             raise HTTPException(status_code=403, detail="El token no contiene roles válidos")
         return Principal(subject=subject, roles=frozenset(raw_roles))
 
-    expected = os.getenv("XILAC_API_TOKEN", "")
-    if not expected:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Token local no configurado",
-        )
-    if not hmac.compare_digest(token, expected):
+    if not hmac.compare_digest(token, local_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales inválidas",
