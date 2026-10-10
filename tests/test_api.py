@@ -59,6 +59,23 @@ def test_process_returns_standard_privacy_warning_when_disabled(monkeypatch):
     assert "No envíes" in response.json()["notice"]
 
 
+def test_process_flags_sensitive_content_without_echoing_matches(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    sensitive = "Nombre completo: Persona Ejemplo. Contacto: alexis@example.com"
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"text": sensitive},
+    )
+    assert response.status_code == 423
+    body = response.json()
+    assert body["status"] == "privacy_warning"
+    assert body["code"] == "POSSIBLE_SENSITIVE_CONTENT"
+    assert "identificador_directo" in body["categories"]
+    assert "alexis@example.com" not in response.text
+    assert "Persona Ejemplo" not in response.text
+
+
 def test_process_fails_closed_when_audit_storage_fails(monkeypatch):
     monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
     monkeypatch.setattr(api, "settings", Settings(cfe_session_processing_enabled=True))

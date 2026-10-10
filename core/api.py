@@ -13,6 +13,7 @@ from core.auth import Principal, require_roles
 from core.config import Settings
 from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
+from core.privacy_detector import detect_sensitive_content
 from core.trace import new_trace
 
 settings = Settings()
@@ -34,7 +35,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.3.2",
+    version="0.4.0",
     docs_url=None if settings.environment == "production" else "/docs",
     redoc_url=None,
     lifespan=lifespan,
@@ -71,7 +72,22 @@ def process(
     request: ProcessRequest,
     principal: Principal = Depends(require_roles("facilitator", "admin")),
 ) -> JSONResponse:
-    # Gate cerrado por defecto. No auditar ni registrar el contenido de la solicitud.
+    # Defensa adicional: este análisis ocurre después de que el cuerpo llegó a la API.
+    # No reemplaza un control local previo al envío ni garantiza detectar todo.
+    finding = detect_sensitive_content(request.text)
+    if finding.should_warn:
+        return JSONResponse(
+            status_code=423,
+            content={
+                "status": "privacy_warning",
+                "code": "POSSIBLE_SENSITIVE_CONTENT",
+                "risk": finding.risk,
+                "categories": list(finding.categories),
+                "notice": PRIVACY_WARNING,
+            },
+        )
+
+    # Gate cerrado por defecto incluso si el detector no encuentra señales.
     if not settings.cfe_session_processing_enabled:
         return JSONResponse(
             status_code=423,
@@ -92,7 +108,6 @@ def process(
             "engine_not_implemented",
         )
     except Exception:
-        # No ejecutar operaciones sensibles si la auditoría no puede persistirse.
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="No se pudo registrar la auditoría; la solicitud fue bloqueada.",
