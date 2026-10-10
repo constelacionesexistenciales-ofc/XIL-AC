@@ -32,7 +32,7 @@ El detector identifica señales explícitas como correos, teléfonos, documentos
 Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
 
 ## Revisión local de privacidad
-Se está preparando un prototipo de revisión previa al envío en `local-privacy-review/index.html`. Es una herramienta local sin función de envío ni llamadas de red; ayuda a evaluar reglas, pero no es todavía un ejecutable instalable ni una llave obligatoria. La arquitectura futura está descrita en [Puerta Local](docs/LOCAL_GATEWAY_ARCHITECTURE.md) y el uso del prototipo en [Revisión local](docs/LOCAL_PRIVACY_REVIEW.md). No usarlo como garantía de anonimización ni habilitar el procesamiento remoto de sesiones.
+Se está preparando una puerta local en `desktop-gateway/` para Windows, con interfaz de escritorio, motor heurístico y flujo de compilación para generar un ejecutable y un instalador. El prototipo HTML de `local-privacy-review/index.html` sigue disponible como demostración sin red. Hasta que la compilación, el instalador y las pruebas se ejecuten y revisen con evidencia, no considerar el paquete listo para instalar ni una llave obligatoria. Consultar [Puerta Local](docs/LOCAL_GATEWAY_ARCHITECTURE.md), [Revisión local](docs/LOCAL_PRIVACY_REVIEW.md) y [guía del escritorio Windows](desktop-gateway/README.md). No usar estos prototipos como garantía de anonimización ni habilitar el procesamiento remoto de sesiones.
 
 ## Documentación
 - [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
