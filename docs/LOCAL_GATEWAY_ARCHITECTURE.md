@@ -54,12 +54,12 @@ El cliente local es el primer control; la API remota mantiene su propio control 
 - Verificar que abrir, analizar, limpiar y cancelar no generen solicitudes de red.
 - El prototipo permite evaluar reglas, pero no es todavía una llave obligatoria.
 
-### Fase B — escritorio instalable
-- Evaluar Tauri con interfaz web y núcleo local Rust, o alternativa equivalente mantenible.
-- Seleccionar sistema operativo inicial antes de empaquetar instaladores reales.
-- Paquetes firmados, actualización verificada, permisos mínimos y recuperación clara.
-- No incrustar credenciales de producción.
-- Si interfaz y motor se separan, limitar la API local a loopback y protegerla contra invocaciones desde sitios web, CSRF y DNS rebinding.
+### Fase B — escritorio instalable (primer objetivo: Windows)
+- MVP elegido: Python + Tkinter para interfaz sencilla, motor local en módulo independiente y empaquetado con PyInstaller; Inno Setup para generar el instalador.
+- La compilación se propone en un flujo automatizado de Windows; el artefacto solo se considera listo tras ejecutar y revisar las pruebas y el instalador.
+- No se necesita un servicio local ni un puerto de escucha para el MVP: interfaz y motor corren en el mismo proceso.
+- No incrustar credenciales de producción. La aplicación no debe importar bibliotecas de red ni contener una función de envío.
+- Tras validar el MVP, reevaluar firma de binarios, actualización verificada, permisos mínimos y recuperación.
 
 ### Fase C — móvil
 - Reutilizar reglas y contrato de políticas donde sea viable, con interfaces nativas cuando corresponda.
