@@ -19,7 +19,7 @@ from core.trace import new_trace
 settings = Settings()
 PRIVACY_WARNING = (
     "La información recibida contiene o podría contener material sensible; "
-    "no recomendamos seguir con esta operación. En esta etapa, No envíes "
+    "no recomendamos seguir con esta operación. No envíes "
     "transcripciones, audios ni datos identificables a la API remota. "
     "Continuá el trabajo de sesiones mediante la interfaz de ChatGPT acordada. "
     "La investigación general y el desarrollo metodológico pueden continuar "
