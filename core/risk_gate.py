@@ -8,22 +8,13 @@ class RiskDecision:
     reason: str
 
 
-def evaluate(
-    risk_level: str,
-    human_override_enabled: bool = True,
-) -> RiskDecision:
+_VALID_LEVELS = {"low", "medium", "high", "critical"}
 
-    level = risk_level.lower()
 
+def evaluate(risk_level: str, human_override_enabled: bool = True) -> RiskDecision:
+    level = risk_level.strip().lower()
+    if level not in _VALID_LEVELS:
+        return RiskDecision(False, True, "Unknown risk level; blocked by default.")
     if level in {"high", "critical"}:
-        return RiskDecision(
-            allowed=False,
-            requires_human_review=human_override_enabled,
-            reason="High-risk action requires human review.",
-        )
-
-    return RiskDecision(
-        allowed=True,
-        requires_human_review=False,
-        reason="No elevated risk detected.",
-    )
+        return RiskDecision(False, True, "High-risk action requires explicit human review.")
+    return RiskDecision(True, False, "No elevated risk detected.")
