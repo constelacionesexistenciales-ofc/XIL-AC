@@ -13,6 +13,8 @@
 
 ## Bloqueos antes de exponer a usuarios
 - [ ] Validar el prototipo local sin red y comprobar con evidencia que inspeccionar, limpiar y cancelar no transmiten datos.
+- [ ] Ejecutar las pruebas del motor local de Windows en CI y revisar los resultados reales.
+- [ ] Generar, instalar, abrir y desinstalar el paquete Windows en un equipo de prueba; revisar alertas de seguridad y conexiones de red.
 - [ ] Construir una aplicación de escritorio instalable con motor local y política de salida; el prototipo HTML no es una llave obligatoria.
 - [ ] Probar el cliente en los sistemas operativos objetivo y verificar firma, actualización y recuperación.
 - [ ] Crear una interfaz local que ejecute el detector antes de transmitir contenido.
