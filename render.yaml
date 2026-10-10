@@ -1,0 +1,34 @@
+# Plantilla de despliegue para PREPRODUCCIÓN; no es producción pública.
+# Completar secretos en el panel de Render. Nunca escribirlos aquí.
+services:
+  - type: web
+    name: xil-ac-preproduccion-privada
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: uvicorn core.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/live
+    autoDeploy: false
+    envVars:
+      - key: APP_NAME
+        value: XIL-AC
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: WARNING
+      - key: TRACE_ENABLED
+        value: "true"
+      - key: RISK_GATE_ENABLED
+        value: "true"
+      - key: HUMAN_OVERRIDE_ENABLED
+        value: "true"
+      - key: OIDC_ISSUER
+        sync: false
+      - key: OIDC_AUDIENCE
+        sync: false
+      - key: OIDC_JWKS_URL
+        sync: false
+      - key: OIDC_ROLES_CLAIM
+        value: roles
+      - key: DATABASE_URL
+        sync: false

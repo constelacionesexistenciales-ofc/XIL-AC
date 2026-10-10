@@ -37,3 +37,8 @@
 
 ## Criterio de aprobación
 No declarar producción habilitada hasta que cada bloqueo aplicable tenga evidencia verificable, revisión y aprobación de la persona responsable.
+
+
+## Preproducción privada
+
+El plan se encuentra en [PREPRODUCCION_PRIVADA.md](PREPRODUCCION_PRIVADA.md). El archivo `render.yaml` es una plantilla; no prueba que exista un despliegue. La API `POST /v1/process` sigue respondiendo HTTP 501 y no debe recibir sesiones reales. Antes de habilitarlas, integrar el motor CFE, verificar OIDC con una identidad autorizada, documentar el tratamiento de datos y probar copias cifradas y restauración.

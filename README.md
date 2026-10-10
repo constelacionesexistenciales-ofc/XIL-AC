@@ -5,7 +5,7 @@
 Estado: **base de ingeniería 0.3.1; todavía no es candidata a producción real**.
 
 ## Incluye
-- API mínima con roles, validación OIDC/JWT en staging/producción y token local solo para desarrollo.
+- API mínima con roles, validación OIDC/JWT en modo estricto y token local solo para desarrollo.
 - Validación estricta de configuración y uso obligatorio de HTTPS para el proveedor de identidad.
 - Límite de 256 KiB para el cuerpo HTTP antes de analizar la solicitud.
 - Identificador de ejecución y control de riesgo que bloquea niveles desconocidos.
@@ -20,19 +20,20 @@ Estado: **base de ingeniería 0.3.1; todavía no es candidata a producción real
 4. Consultar `http://127.0.0.1:8000/health/live` y `/health/ready`.
 
 ## Identidad y roles
-En desarrollo, el token compartido local asigna roles de prueba y solo sirve para trabajar en el equipo local. En staging/producción se deshabilita esa vía y se exige un proveedor OIDC con:
+En desarrollo, el token compartido local asigna roles de prueba y solo sirve para trabajar en el equipo local. En modo estricto se deshabilita esa vía y se exige un proveedor OIDC con:
 - `OIDC_ISSUER`: emisor exacto del token.
 - `OIDC_AUDIENCE`: audiencia de la API.
 - `OIDC_JWKS_URL`: URL HTTPS de claves públicas.
 - `OIDC_ROLES_CLAIM`: claim que contiene una lista de roles; por defecto `roles`.
 
-Los roles `facilitator` o `admin` permiten solicitar procesamiento; el rol `auditor` no lo permite. La integración debe validarse contra el proveedor real antes de producción.
+Los roles `facilitator` o `admin` permiten solicitar procesamiento; el rol `auditor` no lo permite. La integración debe validarse contra el proveedor real antes de habilitar usuarios.
 
 ## Estado funcional importante
-`POST /v1/process` responde HTTP 501 porque el motor CFE todavía no está conectado. La API registra un evento técnico mínimo sin almacenar el texto recibido y bloquea la solicitud si la auditoría no puede guardarse. Las solicitudes HTTP mayores de 256 KiB se rechazan antes del análisis. No están conectados el motor CFE, un gestor de secretos, limitación distribuida de solicitudes ni despliegue cloud. No procesar transcripciones reales hasta superar la [Puerta de producción](docs/PRODUCTION_GATE.md).
+`POST /v1/process` responde HTTP 501 porque el motor CFE todavía no está conectado. La API registra un evento técnico mínimo sin almacenar el texto recibido y bloquea la solicitud si la auditoría no puede guardarse. Las solicitudes HTTP mayores de 256 KiB se rechazan antes del análisis. No están conectados el motor CFE, un gestor de secretos, limitación distribuida de solicitudes ni despliegue cloud. **No enviar sesiones reales a la API hasta superar la Puerta de producción.**
 
 Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
 
 ## Documentación
+- [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
 - [Puerta de producción](docs/PRODUCTION_GATE.md)
 - [Seguridad y datos](docs/SECURITY.md)
