@@ -1,44 +1,32 @@
-# Puerta de producción — XIL-AC 0.3.2
+# Puerta de producción — XIL-AC 0.4.0
 
 ## Estado actual
-**NO APTO PARA PRODUCCIÓN REAL NI PARA SESIONES REALES EN LA API REMOTA.** Esta versión estandariza el recordatorio preventivo de privacidad y conserva el bloqueo por defecto; no conecta el motor CFE ni despliega el servicio.
+**NO APTO PARA PRODUCCIÓN REAL NI PARA SESIONES REALES EN LA API REMOTA.** La versión 0.4.0 incorpora detección heurística de posibles datos sensibles como defensa adicional. No conecta el motor CFE ni despliega el servicio.
 
-## Controles construidos
-- [x] CI con análisis estático y pruebas automatizadas.
-- [x] Pruebas de migración repetida contra PostgreSQL.
-- [x] Validación de configuración de Docker Compose.
-- [x] Token compartido restringido a desarrollo/pruebas.
+## Controles incorporados
+- [x] Aviso preventivo estándar y compuerta de sesiones cerrada por defecto.
+- [x] Detector heurístico de datos sensibles que devuelve categorías sin repetir los valores detectados.
+- [x] Pruebas de reglas y del comportamiento de bloqueo de la API.
 - [x] Validación OIDC/JWT preparada para staging/producción.
-- [x] Autorización por roles para el endpoint de procesamiento.
-- [x] Persistencia de eventos de auditoría sin transcripciones.
-- [x] Bloqueo de solicitudes si falla la persistencia de auditoría.
-- [x] Límite del cuerpo HTTP de 256 KiB.
+- [x] Autorización por roles, auditoría sin transcripciones y límite del cuerpo HTTP.
 - [x] Contenedor no-root y puerto local enlazado a localhost.
-- [x] Aviso preventivo estandarizado cuando el procesamiento remoto está deshabilitado.
 
 ## Bloqueos antes de exponer a usuarios
-- [ ] Configurar proveedor OIDC real, emisor, audiencia, JWKS y claims de roles; probar tokens reales.
+- [ ] Crear una interfaz local que ejecute el detector antes de transmitir contenido.
+- [ ] Medir falsos positivos y falsos negativos con un conjunto de pruebas sintético representativo.
+- [ ] Configurar y verificar un proveedor OIDC real y limitar el acceso a Alexis.
 - [ ] Elegir y configurar gestor de secretos administrado.
-- [ ] Conectar el motor CFE, proveedores de modelos y sus credenciales con límites, tiempos máximos y manejo seguro de errores.
-- [ ] Implementar límites de solicitudes compartidos/distribuidos y controles contra abuso.
-- [ ] Añadir métricas, alertas y observabilidad operativa sin datos personales.
-- [ ] Probar copias de seguridad, restauración, rollback y migraciones en entorno de prueba.
-- [ ] Definir retención, borrado, consentimiento y controles de acceso para datos de consultantes.
-- [ ] Ejecutar pruebas de seguridad, fuga entre consultantes, inyección de instrucciones y carga.
-- [ ] Configurar protección de rama, revisión obligatoria y permisos mínimos en GitHub.
-- [ ] Desplegar en infraestructura real y verificar TLS, red privada, base administrada y recuperación.
+- [ ] Conectar y probar el motor CFE y los proveedores de modelos.
+- [ ] Implementar límites de solicitudes, observabilidad, retención y borrado.
+- [ ] Probar copias de seguridad, restauración, permisos, aislamiento, seguridad y carga.
+- [ ] Desplegar en infraestructura real y verificar TLS, base de datos y recuperación.
 - [ ] Obtener aprobación humana explícita antes de habilitar el uso real.
 
 ## Limitaciones conocidas
-- `POST /v1/process` responde HTTP 423 mientras la compuerta de sesiones está cerrada; si se abre manualmente, responde HTTP 501 porque el motor CFE no está conectado.
-- La configuración OIDC está implementada, pero todavía no está probada contra un proveedor real.
-- El control de roles usa el claim configurable indicado; la estructura real del token depende del proveedor.
-- El esquema y la escritura de auditoría están conectados, pero faltan políticas de retención y una vista administrativa protegida.
-- El aviso de privacidad es preventivo: no hay un detector automático fiable de información sensible.
-- No hay gestor de secretos, limitación distribuida ni despliegue cloud.
+- El detector es heurístico; no garantiza detectar todo dato sensible ni determina que el contenido sea seguro.
+- La detección que corre dentro de la API ocurre después de que el texto llegó al servidor; no evita la transmisión inicial.
+- `POST /v1/process` responde HTTP 423 mientras la compuerta está cerrada. Si se abre manualmente, el motor aún no conectado produce HTTP 501.
+- No hay gestor de secretos ni despliegue cloud verificado.
 
 ## Criterio de aprobación
 No declarar producción habilitada hasta que cada bloqueo aplicable tenga evidencia verificable, revisión y aprobación de la persona responsable.
-
-## Preproducción privada
-El plan se encuentra en [PREPRODUCCION_PRIVADA.md](PREPRODUCCION_PRIVADA.md). El archivo `render.yaml` es una plantilla; no prueba que exista un despliegue. La API `POST /v1/process` permanece bloqueada y no debe recibir sesiones reales. Antes de habilitarlas, integrar el motor CFE, verificar OIDC con una identidad autorizada, documentar el tratamiento de datos y probar copias cifradas y restauración.
