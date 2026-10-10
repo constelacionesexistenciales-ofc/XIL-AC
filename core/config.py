@@ -44,7 +44,7 @@ class Settings:
                 raise ValueError("OIDC_JWKS_URL must use HTTPS")
             if not self.oidc_roles_claim:
                 raise ValueError("OIDC_ROLES_CLAIM cannot be empty")
-        if self.environment == "production" and not os.getenv("DATABASE_URL", "").strip():
-            raise ValueError("DATABASE_URL is required in production")
-        if self.environment == "production" and not self.risk_gate_enabled:
-            raise ValueError("RISK_GATE_ENABLED cannot be disabled in production")
+            if not os.getenv("DATABASE_URL", "").strip():
+                raise ValueError("DATABASE_URL is required in staging and production")
+            if not self.risk_gate_enabled:
+                raise ValueError("RISK_GATE_ENABLED cannot be disabled in staging or production")
