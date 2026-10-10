@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Prototipo de la experiencia universal de investigación de XIL-AC.">
+  <title>Investigación · XIL-AC</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <a class="brand" href="#" aria-label="XIL-AC inicio"><span class="brand-mark">x</span><span>XIL-AC<small>ESPACIO DE INVESTIGACIÓN</small></span></a>
+      <button class="new-research" id="newResearch" type="button"><span aria-hidden="true">＋</span> Nueva investigación</button>
+      <div class="side-label">ESPACIO DE TRABAJO</div>
+      <a class="nav-item active" href="#research"><span aria-hidden="true">◈</span> Investigación</a>
+      <a class="nav-item" href="#sources"><span aria-hidden="true">▤</span> Fuentes y evidencia</a>
+      <div class="sidebar-bottom"><span class="status-dot"></span><span>Prototipo local</span><span class="status-pill">DEMO</span></div>
+    </aside>
+
+    <main id="research" class="main-content">
+      <header class="topbar"><div class="breadcrumb">Espacio de trabajo <span>/</span> <strong>Investigación</strong></div><div class="topbar-right"><span class="private-label"><span aria-hidden="true">◇</span> Vista de demostración</span><span class="avatar" aria-label="Usuario">A</span></div></header>
+      <section class="welcome">
+        <div class="eyebrow"><span class="eyebrow-line"></span> INVESTIGACIÓN UNIVERSAL</div>
+        <h1>Entender mejor.<br><em>Investigar con criterio.</em></h1>
+        <p class="intro">Una experiencia clara para explorar cualquier tema, comparar perspectivas y distinguir lo que sabemos de lo que todavía necesitamos comprobar.</p>
+        <form id="researchForm" class="search-panel">
+          <label class="sr-only" for="researchQuestion">¿Qué querés investigar?</label>
+          <textarea id="researchQuestion" rows="2" placeholder="¿Qué querés investigar?" required>¿Cómo afecta la urbanización a la biodiversidad?</textarea>
+          <div class="search-controls"><label class="select-wrap"><span class="sr-only">Área de investigación</span><select id="domain"><option value="science">Ciencia y salud</option><option value="history">Historia y cultura</option><option value="technology">Tecnología</option><option value="business">Negocios y estrategia</option><option value="education">Educación y conceptos</option><option value="cfe">Desarrollo personal y CFE</option></select></label><button class="primary-button" type="submit">Explorar <span aria-hidden="true">↗</span></button></div>
+        </form>
+        <div class="suggestions"><span>Podés explorar:</span><button type="button" data-prompt="Comparar dos tecnologías emergentes">Tecnología</button><button type="button" data-prompt="Investigar un acontecimiento histórico y sus fuentes">Historia</button><button type="button" data-prompt="Analizar distintas perspectivas sobre una pregunta humana">Desarrollo personal</button></div>
+      </section>
+
+      <section class="results" aria-live="polite" aria-busy="false" id="results">
+        <div class="results-heading"><div><div class="eyebrow">VISTA GENERAL <span class="demo-tag">CONTENIDO DE EJEMPLO</span></div><h2 id="resultTitle">Urbanización y biodiversidad</h2></div><button class="quiet-button" id="copySummary" type="button">Copiar pregunta <span aria-hidden="true">↗</span></button></div>
+        <div class="summary-card">
+          <div class="summary-icon" aria-hidden="true">✳</div>
+          <div><div class="card-kicker">SÍNTESIS INICIAL</div><p id="summaryText">La expansión urbana puede reducir y fragmentar hábitats, pero el impacto depende del diseño de las ciudades, la conectividad ecológica y las decisiones de conservación. Esta pantalla es una demostración visual: no contiene una investigación ejecutada ni fuentes verificadas.</p></div>
+        </div>
+
+        <div class="content-grid">
+          <article class="panel overview-panel"><div class="panel-heading"><div><span class="panel-index">01</span><h3>Mapa de la investigación</h3></div><span class="subtle">4 ejes de exploración</span></div>
+            <div class="topic-map" id="topicMap">
+              <div class="topic-center"><span>Pregunta</span><strong>Impacto<br>urbano</strong></div>
+              <div class="topic-node node-one"><span class="node-dot"></span><strong>Hábitats</strong><small>Pérdida y fragmentación</small></div>
+              <div class="topic-node node-two"><span class="node-dot"></span><strong>Especies</strong><small>Adaptación y presión</small></div>
+              <div class="topic-node node-three"><span class="node-dot"></span><strong>Planificación</strong><small>Diseño y conectividad</small></div>
+              <div class="topic-node node-four"><span class="node-dot"></span><strong>Conservación</strong><small>Medidas y resultados</small></div>
+              <svg class="map-lines" viewBox="0 0 600 290" preserveAspectRatio="none" aria-hidden="true"><line x1="300" y1="145" x2="135" y2="60"/><line x1="300" y1="145" x2="465" y2="60"/><line x1="300" y1="145" x2="135" y2="235"/><line x1="300" y1="145" x2="465" y2="235"/></svg>
+            </div>
+            <p class="visual-caption">Esquema conceptual ilustrativo. Los ejes definitivos deben derivarse de la pregunta y de las fuentes disponibles.</p>
+          </article>
+          <article class="panel evidence-panel"><div class="panel-heading"><div><span class="panel-index">02</span><h3>Estado de la evidencia</h3></div><span class="subtle">Criterio de lectura</span></div>
+            <div class="evidence-row"><span class="evidence-symbol verified">✓</span><div><strong>Hallazgo respaldado</strong><p>Afirmación vinculada a fuentes fiables y verificables.</p></div></div>
+            <div class="evidence-row"><span class="evidence-symbol interpretation">≈</span><div><strong>Interpretación</strong><p>Lectura razonada de los datos, con sus supuestos explícitos.</p></div></div>
+            <div class="evidence-row"><span class="evidence-symbol open">?</span><div><strong>Pregunta abierta</strong><p>Aspecto sin evidencia suficiente o con resultados en disputa.</p></div></div>
+            <div class="evidence-note"><span aria-hidden="true">ⓘ</span> El diseño no asigna etiquetas de evidencia por sí solo: deben provenir de la evaluación del contenido.</div>
+          </article>
+        </div>
+
+        <section class="panel findings-panel"><div class="panel-heading"><div><span class="panel-index">03</span><h3>Rutas para profundizar</h3></div><span class="subtle">Presentación adaptable</span></div>
+          <div class="finding-list" id="findingList">
+            <button class="finding" type="button" aria-expanded="false"><span class="finding-number">01</span><span class="finding-copy"><strong>Qué se sabe</strong><small>Hallazgos respaldados por fuentes primarias y revisiones.</small><span class="finding-detail">En una investigación real, este apartado resume únicamente afirmaciones verificadas y enlaza las fuentes que las sostienen.</span></span><span class="chevron" aria-hidden="true">＋</span></button>
+            <button class="finding" type="button" aria-expanded="false"><span class="finding-number">02</span><span class="finding-copy"><strong>Qué está en discusión</strong><small>Resultados contradictorios, supuestos y límites.</small><span class="finding-detail">Se presentan las diferencias entre fuentes sin fabricar consenso ni ocultar resultados que no encajan.</span></span><span class="chevron" aria-hidden="true">＋</span></button>
+            <button class="finding" type="button" aria-expanded="false"><span class="finding-number">03</span><span class="finding-copy"><strong>Qué conviene investigar después</strong><small>Vacíos de información y próximos pasos posibles.</small><span class="finding-detail">Las siguientes preguntas se priorizan según relevancia, incertidumbre y utilidad para la decisión del usuario.</span></span><span class="chevron" aria-hidden="true">＋</span></button>
+          </div>
+        </section>
+        <section id="sources" class="sources-footer"><div><span class="source-icon" aria-hidden="true">↗</span><div><strong>Fuentes y trazabilidad</strong><p>La versión integrada deberá mostrar enlaces reales, fecha de consulta y la relación entre cada fuente y cada afirmación.</p></div></div><span class="status-pill">PENDIENTE DE INTEGRACIÓN</span></section>
+        <footer><span>XIL-AC · Experiencia universal de investigación</span><span>Prototipo de interfaz · No es un motor de investigación conectado</span></footer>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js" defer></script>
+</body>
+</html>
