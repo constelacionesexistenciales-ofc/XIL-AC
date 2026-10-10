@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Annotated, Callable
 
 import jwt
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from jwt import PyJWKClient
 from jwt.exceptions import PyJWKClientConnectionError, PyJWKClientError, PyJWTError
 
@@ -25,7 +25,7 @@ class Principal:
 def _verify_oidc_token(token: str, issuer: str, audience: str, jwks_url: str) -> dict:
     client = PyJWKClient(jwks_url, cache_jwk_set=True, lifespan=300, timeout=5)
     signing_key = client.get_signing_key_from_jwt(token)
-    claims = jwt.decode(
+    return jwt.decode(
         token,
         signing_key.key,
         algorithms=["RS256", "ES256"],
@@ -34,7 +34,6 @@ def _verify_oidc_token(token: str, issuer: str, audience: str, jwks_url: str) ->
         options={"require": ["exp", "iss", "aud", "sub"]},
         leeway=30,
     )
-    return claims
 
 
 def _claim_value(claims: dict, dotted_path: str):
@@ -104,7 +103,6 @@ def get_current_principal(
             detail="Credenciales inválidas",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # El token compartido solo existe para desarrollo/pruebas; no se admite en staging/producción.
     return Principal(
         subject="local-development",
         roles=frozenset({"admin", "facilitator", "auditor"}),
@@ -115,7 +113,7 @@ def require_roles(*allowed_roles: str) -> Callable:
     allowed = frozenset(allowed_roles)
 
     def dependency(
-        principal: Annotated[Principal, __import__("fastapi").Depends(get_current_principal)],
+        principal: Annotated[Principal, Depends(get_current_principal)],
     ) -> Principal:
         if not allowed.intersection(principal.roles):
             raise HTTPException(
