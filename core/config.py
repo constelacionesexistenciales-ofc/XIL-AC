@@ -49,3 +49,8 @@ class Settings:
                 raise ValueError("DATABASE_URL is required in staging and production")
             if not self.risk_gate_enabled:
                 raise ValueError("RISK_GATE_ENABLED cannot be disabled in staging or production")
+            if self.cfe_session_processing_enabled:
+                raise ValueError(
+                    "CFE_SESSION_PROCESSING_ENABLED cannot be enabled in staging or production "
+                    "until the CFE engine and production gate are implemented"
+                )
