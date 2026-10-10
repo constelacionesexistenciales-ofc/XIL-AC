@@ -34,11 +34,20 @@ class ProcessResponse(BaseModel):
 def require_token(authorization: Annotated[str | None, Header()] = None) -> None:
     expected = os.getenv("XILAC_API_TOKEN", "")
     if not expected:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Servicio protegido no configurado")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Servicio protegido no configurado",
+        )
     supplied = authorization or ""
     prefix = "Bearer "
-    if not supplied.startswith(prefix) or not hmac.compare_digest(supplied[len(prefix):], expected):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas", headers={"WWW-Authenticate": "Bearer"})
+    if not supplied.startswith(prefix) or not hmac.compare_digest(
+        supplied[len(prefix):], expected
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales inválidas",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 @app.on_event("startup")
@@ -56,7 +65,11 @@ def ready() -> dict[str, str]:
     return {"status": "ready", "database": "not_checked"}
 
 
-@app.post("/v1/process", response_model=ProcessResponse, dependencies=[Depends(require_token)])
+@app.post(
+    "/v1/process",
+    response_model=ProcessResponse,
+    dependencies=[Depends(require_token)],
+)
 def process(_: ProcessRequest) -> ProcessResponse:
     trace = new_trace()
     return ProcessResponse(
