@@ -28,8 +28,10 @@ En desarrollo, el token compartido local asigna roles de prueba y solo sirve par
 
 Los roles `facilitator` o `admin` permiten solicitar procesamiento; el rol `auditor` no lo permite. La integración debe validarse contra el proveedor real antes de habilitar usuarios.
 
-## Estado funcional importante
-`POST /v1/process` responde HTTP 501 porque el motor CFE todavía no está conectado. La API registra un evento técnico mínimo sin almacenar el texto recibido y bloquea la solicitud si la auditoría no puede guardarse. Las solicitudes HTTP mayores de 256 KiB se rechazan antes del análisis. No están conectados el motor CFE, un gestor de secretos, limitación distribuida de solicitudes ni despliegue cloud. **No enviar sesiones reales a la API hasta superar la Puerta de producción.**
+## Modos de trabajo y privacidad
+La investigación y el desarrollo metodológico pueden continuar mediante la interfaz actual de ChatGPT. El motor autónomo de búsqueda dentro de XIL-AC aún requiere integración. Durante esta etapa, el trabajo de sesiones se realiza por la interfaz de ChatGPT; no enviar información de consultantes a la API remota.
+
+`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 con un aviso de bloqueo mientras el procesamiento esté deshabilitado. El cuerpo de una solicitud puede llegar al servidor antes del rechazo, así que no enviar contenido sensible al servicio remoto. El motor CFE sigue sin estar conectado; cuando se habilite la compuerta, la respuesta será HTTP 501 hasta que el motor exista. No están conectados un gestor de secretos, limitación distribuida ni despliegue cloud. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
 
 Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
 
