@@ -1,9 +1,12 @@
-"""Conexión PostgreSQL opcional y sin exposición de credenciales."""
+"""Acceso PostgreSQL con tiempos de conexión acotados."""
 from __future__ import annotations
+
 import os
 from contextlib import contextmanager
 from typing import Iterator
+
 import psycopg
+
 
 @contextmanager
 def connection() -> Iterator[psycopg.Connection]:
@@ -12,6 +15,7 @@ def connection() -> Iterator[psycopg.Connection]:
         raise RuntimeError("DATABASE_URL no está configurada")
     with psycopg.connect(dsn, connect_timeout=5) as conn:
         yield conn
+
 
 def check_database() -> bool:
     with connection() as conn:
