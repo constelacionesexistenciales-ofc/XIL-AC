@@ -23,6 +23,16 @@ El detector identifica señales explícitas como correos, teléfonos, documentos
 
 `CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 cuando detecta señales sensibles o mientras el procesamiento esté deshabilitado. El motor CFE sigue sin estar conectado y no hay despliegue cloud verificado. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
 
+## Inspección local preventiva de privacidad
+
+Hay una primera utilidad de inspección local que no realiza conexiones de red y no imprime el texto recibido:
+
+```bash
+python -m scripts.privacy_preflight < texto.txt
+```
+
+Devuelve categorías y nivel de riesgo. Código de salida `0`: no detectó señales explícitas; `2`: bloquea por señales detectadas o contenido no verificable. Un resultado sin señales **no demuestra** que el texto esté libre de datos sensibles. Esta utilidad no está integrada automáticamente con una interfaz ni sustituye la compuerta remota.
+
 ## Inicio local con Docker
 1. Copiar `.env.example` a `.env`.
 2. Reemplazar `XILAC_API_TOKEN` y `POSTGRES_PASSWORD` por valores aleatorios largos. Son solo secretos de desarrollo local.
