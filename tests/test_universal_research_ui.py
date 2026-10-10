@@ -32,7 +32,7 @@ def test_demo_never_claims_to_fetch_real_research():
     assert "XMLHttpRequest" not in JS
     assert "WebSocket" not in JS
     assert "no contiene una investigación ejecutada" in HTML
-    assert "no es un motor de investigación conectado" in DOC.lower()
+    assert "not a static mockup presented as a working product" in DOC
 
 
 def test_responsive_accessibility_and_reduced_motion_contract():
