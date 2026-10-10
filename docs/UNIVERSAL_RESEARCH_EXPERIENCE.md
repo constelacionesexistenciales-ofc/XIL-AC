@@ -1,6 +1,6 @@
 # Universal Research Experience — XIL-AC
 
-**Status:** design contract / implementation pending  
+**Status:** interactive static prototype implemented; production integration and browser-level verification pending  
 **Scope:** every user-facing research task, regardless of domain.  
 **Applies to:** the shared research interface and presentation layer, not only Constelaciones Familiares y Existenciales (CFE).
 
