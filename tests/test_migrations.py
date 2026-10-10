@@ -1,3 +1,6 @@
+import os
+
+import psycopg
 import pytest
 
 from scripts.migrate import main
@@ -7,3 +10,23 @@ def test_migration_runner_requires_database_url(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(SystemExit, match="DATABASE_URL"):
         main()
+
+
+def test_migrations_apply_idempotently_to_postgresql(monkeypatch):
+    dsn = os.getenv("TEST_DATABASE_URL")
+    if not dsn:
+        pytest.skip("TEST_DATABASE_URL no está configurada")
+    monkeypatch.setenv("DATABASE_URL", dsn)
+
+    main()
+    main()
+
+    with psycopg.connect(dsn) as conn:
+        version = conn.execute(
+            "SELECT version FROM schema_migrations WHERE version = %s",
+            ("0001_initial",),
+        ).fetchone()
+        table = conn.execute("SELECT to_regclass('public.audit_events')").fetchone()
+
+    assert version == ("0001_initial",)
+    assert table == ("audit_events",)
