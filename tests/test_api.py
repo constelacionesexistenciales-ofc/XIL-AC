@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 import core.auth as auth
 import core.api as api
-from core.auth import Principal
 from core.config import Settings
 
 client = TestClient(api.app)
@@ -47,6 +46,22 @@ def test_process_does_not_claim_engine_is_implemented(monkeypatch):
     )
     assert response.status_code == 501
     assert response.json()["status"] == "not_implemented"
+
+
+def test_process_fails_closed_when_audit_storage_fails(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+
+    def fail_audit(*args):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(api, "record_audit_event", fail_audit)
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"text": "texto privado"},
+    )
+    assert response.status_code == 503
+    assert "auditoría" in response.json()["detail"]
 
 
 def test_oidc_role_without_permission_is_denied(monkeypatch):
