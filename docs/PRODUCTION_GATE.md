@@ -14,7 +14,7 @@
 
 ## Bloqueos antes de exponer a usuarios
 - [ ] Ejecutar y aprobar CI en el cambio propuesto: pruebas, Ruff, Compose y PostgreSQL de integración.
-- [ ] Crear una interfaz local que inspeccione el contenido antes de transmitirlo.
+- [ ] Integrar la inspección local previa al envío en el cliente/interfaz. Existe una utilidad CLI inicial (`python -m scripts.privacy_preflight`), pero no está integrada automáticamente con una interfaz ni bloquea a otros clientes.
 - [ ] Medir falsos positivos y falsos negativos con un conjunto sintético representativo.
 - [ ] Configurar y verificar un proveedor OIDC real y limitar el acceso operativo a la identidad autorizada.
 - [ ] Elegir y configurar un gestor de secretos administrado.
