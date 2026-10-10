@@ -2,7 +2,7 @@
 
 **Núcleo seguro y auditable para el procesamiento y acompañamiento CFE.**
 
-Estado: **base de ingeniería 0.4.0; todavía no es candidata a producción real**.
+Estado: **base de ingeniería 0.4.1; todavía no es candidata a producción real**.
 
 ## Incluye
 - API mínima con roles, validación OIDC/JWT en modo estricto y token local solo para desarrollo.
