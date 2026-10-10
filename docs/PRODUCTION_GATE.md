@@ -1,7 +1,7 @@
-# Puerta de producción — XIL-AC 0.3.0
+# Puerta de producción — XIL-AC 0.3.1
 
 ## Estado actual
-**NO APTO PARA PRODUCCIÓN REAL.** Esta versión añade controles de identidad y auditoría, pero no conecta el motor CFE ni despliega el servicio.
+**NO APTO PARA PRODUCCIÓN REAL.** Esta versión añade controles de identidad, auditoría y tamaño de solicitud, pero no conecta el motor CFE ni despliega el servicio.
 
 ## Controles construidos
 - [x] CI con análisis estático y pruebas automatizadas.
@@ -12,6 +12,7 @@
 - [x] Autorización por roles para el endpoint de procesamiento.
 - [x] Persistencia de eventos de auditoría sin transcripciones.
 - [x] Bloqueo de solicitudes si falla la persistencia de auditoría.
+- [x] Límite del cuerpo HTTP de 256 KiB.
 - [x] Contenedor no-root y puerto local enlazado a localhost.
 
 ## Bloqueos antes de exponer a usuarios

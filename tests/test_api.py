@@ -20,6 +20,15 @@ def test_readiness_fails_when_database_is_unavailable(monkeypatch):
     assert response.json()["detail"]["status"] == "not_ready"
 
 
+def test_oversized_body_is_rejected_before_parsing():
+    response = client.post(
+        "/v1/process",
+        content=b"x" * (300 * 1024),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 413
+
+
 def test_process_fails_closed_without_token(monkeypatch):
     monkeypatch.delenv("XILAC_API_TOKEN", raising=False)
     response = client.post("/v1/process", json={"text": "contenido privado"})
