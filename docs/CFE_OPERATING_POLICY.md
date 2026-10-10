@@ -28,7 +28,7 @@ Como Alexis es el único usuario operativo, el aviso funciona como recordatorio;
 `CFE_SESSION_PROCESSING_ENABLED=false` por defecto. La API remota responde con un aviso de bloqueo. El cuerpo HTTP puede llegar al servidor antes del rechazo. El motor CFE no está conectado; cambiar la variable no crea el motor ni autoriza el procesamiento.
 
 ## Próximos pasos antes de habilitar sesiones
-- Crear una interfaz o utilidad local que ejecute el detector antes de transmitir datos.
+- Integrar una inspección local previa al envío en el cliente. Existe una utilidad CLI inicial (`python -m scripts.privacy_preflight`) que no transmite datos, pero no está integrada automáticamente con una interfaz.
 - Evaluar el detector con ejemplos sintéticos y medir falsos positivos y falsos negativos.
 - Mantener el bloqueo remoto hasta que el motor real, la identidad, la retención y las pruebas de seguridad estén aprobados.
 - Probar el tratamiento de datos, borrado, acceso, copias y recuperación.
