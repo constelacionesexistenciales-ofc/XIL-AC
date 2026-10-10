@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import hmac
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -14,11 +16,20 @@ from core.db import check_database
 from core.trace import new_trace
 
 settings = Settings()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    settings.validate()
+    yield
+
+
 app = FastAPI(
     title=settings.app_name,
     version="0.2.0",
     docs_url=None if settings.environment == "production" else "/docs",
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 
@@ -44,11 +55,6 @@ def require_token(authorization: Annotated[str | None, Header()] = None) -> None
             detail="Credenciales inválidas",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-
-@app.on_event("startup")
-def validate_settings() -> None:
-    settings.validate()
 
 
 @app.get("/health/live")
