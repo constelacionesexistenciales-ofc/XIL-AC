@@ -21,6 +21,7 @@ class Settings:
     trace_enabled: bool = _env_bool("TRACE_ENABLED", True)
     risk_gate_enabled: bool = _env_bool("RISK_GATE_ENABLED", True)
     human_override_enabled: bool = _env_bool("HUMAN_OVERRIDE_ENABLED", True)
+    cfe_session_processing_enabled: bool = _env_bool("CFE_SESSION_PROCESSING_ENABLED", False)
     oidc_issuer: str = os.getenv("OIDC_ISSUER", "").strip()
     oidc_audience: str = os.getenv("OIDC_AUDIENCE", "").strip()
     oidc_jwks_url: str = os.getenv("OIDC_JWKS_URL", "").strip()

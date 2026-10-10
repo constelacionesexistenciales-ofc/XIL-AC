@@ -1,7 +1,7 @@
 # Puerta de producción — XIL-AC 0.3.1
 
 ## Estado actual
-**NO APTO PARA PRODUCCIÓN REAL.** Esta versión añade controles de identidad, auditoría y tamaño de solicitud, pero no conecta el motor CFE ni despliega el servicio.
+**NO APTO PARA PRODUCCIÓN REAL NI PARA SESIONES REALES EN LA API REMOTA.** Esta versión añade controles de identidad, auditoría, tamaño de solicitud y bloqueo por defecto; no conecta el motor CFE ni despliega el servicio.
 
 ## Controles construidos
 - [x] CI con análisis estático y pruebas automatizadas.

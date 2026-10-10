@@ -53,12 +53,14 @@ def test_process_does_not_claim_engine_is_implemented(monkeypatch):
         headers={"Authorization": "Bearer test-secret"},
         json={"text": "texto de prueba"},
     )
-    assert response.status_code == 501
-    assert response.json()["status"] == "not_implemented"
+    assert response.status_code == 423
+    assert response.json()["status"] == "temporarily_blocked"
+    assert "No envíes transcripciones" in response.json()["notice"]
 
 
 def test_process_fails_closed_when_audit_storage_fails(monkeypatch):
     monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(api, "settings", Settings(cfe_session_processing_enabled=True))
 
     def fail_audit(*args):
         raise RuntimeError("database unavailable")
