@@ -63,7 +63,23 @@ def process(
     request: ProcessRequest,
     principal: Principal = Depends(require_roles("facilitator", "admin")),
 ) -> JSONResponse:
-    # No registrar la transcripción: solo se conserva un evento técnico mínimo.
+    # Gate cerrado por defecto. No auditar ni registrar el contenido de la solicitud.
+    if not settings.cfe_session_processing_enabled:
+        return JSONResponse(
+            status_code=423,
+            content={
+                "status": "temporarily_blocked",
+                "code": "CFE_SESSION_PROCESSING_DISABLED",
+                "notice": (
+                    "Aviso de privacidad: el procesamiento de sesiones está temporalmente "
+                    "deshabilitado en esta preproducción. No envíes transcripciones, audios "
+                    "ni datos identificables a este servicio. Continuá el trabajo de sesión "
+                    "mediante la interfaz de ChatGPT acordada. La investigación general y "
+                    "el desarrollo metodológico siguen disponibles por esa interfaz."
+                ),
+            },
+        )
+    # El motor aún no está conectado; no registrar la transcripción.
     _ = request.mode, request.text
     trace = new_trace()
     try:
