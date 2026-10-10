@@ -56,10 +56,7 @@ def ready() -> dict[str, str]:
     return {"status": "ready", "database": "available"}
 
 
-@app.post(
-    "/v1/process",
-    dependencies=[Depends(require_roles("facilitator", "admin"))],
-)
+@app.post("/v1/process")
 def process(
     request: ProcessRequest,
     principal: Principal = Depends(require_roles("facilitator", "admin")),
