@@ -12,6 +12,7 @@ from core.audit import record_audit_event
 from core.auth import Principal, require_roles
 from core.config import Settings
 from core.db import check_database
+from core.middleware import MaxRequestBodySizeMiddleware
 from core.trace import new_trace
 
 settings = Settings()
@@ -25,11 +26,12 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.3.0",
+    version="0.3.1",
     docs_url=None if settings.environment == "production" else "/docs",
     redoc_url=None,
     lifespan=lifespan,
 )
+app.add_middleware(MaxRequestBodySizeMiddleware, max_bytes=256 * 1024)
 
 
 class ProcessRequest(BaseModel):
