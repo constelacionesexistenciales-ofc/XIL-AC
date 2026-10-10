@@ -17,7 +17,7 @@ Mantener el procesamiento de sesiones bloqueado y no enviar contenido real de co
 
 ## Secuencia de cierre
 1. Ejecutar CI y corregir fallos.
-2. Añadir una barrera de arranque que impida habilitar el motor aún no implementado en staging/producción.
+2. Verificar en CI la barrera de arranque añadida en esta rama y mantenerla cubierta por prueba de regresión.
 3. Crear inspección local previa al envío y medir el detector con corpus sintético.
 4. Configurar y probar OIDC, PostgreSQL y secretos en preproducción privada.
 5. Probar autorización externa, límites, observabilidad, copias y restauración.
