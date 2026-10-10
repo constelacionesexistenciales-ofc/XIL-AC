@@ -2,11 +2,12 @@
 
 **Núcleo seguro y auditable para el procesamiento y acompañamiento CFE.**
 
-Estado: **base de ingeniería 0.3.0; todavía no es candidata a producción real**.
+Estado: **base de ingeniería 0.3.1; todavía no es candidata a producción real**.
 
 ## Incluye
 - API mínima con roles, validación OIDC/JWT en staging/producción y token local solo para desarrollo.
 - Validación estricta de configuración y uso obligatorio de HTTPS para el proveedor de identidad.
+- Límite de 256 KiB para el cuerpo HTTP antes de analizar la solicitud.
 - Identificador de ejecución y control de riesgo que bloquea niveles desconocidos.
 - Comprobación real de PostgreSQL, migraciones numeradas e idempotentes y auditoría técnica sin transcripciones.
 - Pruebas automatizadas, integración continua con PostgreSQL, análisis estático, CodeQL y Dependabot.
@@ -28,7 +29,7 @@ En desarrollo, el token compartido local asigna roles de prueba y solo sirve par
 Los roles `facilitator` o `admin` permiten solicitar procesamiento; el rol `auditor` no lo permite. La integración debe validarse contra el proveedor real antes de producción.
 
 ## Estado funcional importante
-`POST /v1/process` responde HTTP 501 porque el motor CFE todavía no está conectado. La API registra un evento técnico mínimo sin almacenar el texto recibido y bloquea la solicitud si la auditoría no puede guardarse. No están conectados el motor CFE, un gestor de secretos, limitación distribuida de solicitudes ni despliegue cloud. No procesar transcripciones reales hasta superar la [Puerta de producción](docs/PRODUCTION_GATE.md).
+`POST /v1/process` responde HTTP 501 porque el motor CFE todavía no está conectado. La API registra un evento técnico mínimo sin almacenar el texto recibido y bloquea la solicitud si la auditoría no puede guardarse. Las solicitudes HTTP mayores de 256 KiB se rechazan antes del análisis. No están conectados el motor CFE, un gestor de secretos, limitación distribuida de solicitudes ni despliegue cloud. No procesar transcripciones reales hasta superar la [Puerta de producción](docs/PRODUCTION_GATE.md).
 
 Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
 
