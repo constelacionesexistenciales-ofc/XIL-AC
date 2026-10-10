@@ -4,6 +4,7 @@
 - En producción, usar un gestor de secretos administrado y rotar credenciales expuestas.
 - El token compartido solo está habilitado en desarrollo/pruebas; staging y producción exigen OIDC/JWT y validación de emisor, audiencia, firma, expiración y roles.
 - El acceso a procesamiento requiere el rol `facilitator` o `admin`; el rol `auditor` no puede procesar.
+- El cuerpo HTTP tiene un límite de 256 KiB para reducir el riesgo de agotamiento de memoria.
 - Los eventos técnicos guardan identificador de ejecución, tipo, actor y resultado; nunca guardan el texto de la sesión.
 - La solicitud se bloquea si no se puede persistir el evento de auditoría.
 - No usar transcripciones reales en pruebas ni incluirlas en registros, errores o incidencias.
