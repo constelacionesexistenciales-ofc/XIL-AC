@@ -16,6 +16,14 @@ from core.middleware import MaxRequestBodySizeMiddleware
 from core.trace import new_trace
 
 settings = Settings()
+PRIVACY_WARNING = (
+    "La información recibida contiene o podría contener material sensible; "
+    "no recomendamos seguir con esta operación. En esta etapa, no envíes "
+    "transcripciones, audios ni datos identificables a la API remota. "
+    "Continuá el trabajo de sesiones mediante la interfaz de ChatGPT acordada. "
+    "La investigación general y el desarrollo metodológico pueden continuar "
+    "por esa interfaz."
+)
 
 
 @asynccontextmanager
@@ -26,7 +34,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.3.1",
+    version="0.3.2",
     docs_url=None if settings.environment == "production" else "/docs",
     redoc_url=None,
     lifespan=lifespan,
@@ -70,13 +78,7 @@ def process(
             content={
                 "status": "temporarily_blocked",
                 "code": "CFE_SESSION_PROCESSING_DISABLED",
-                "notice": (
-                    "Aviso de privacidad: el procesamiento de sesiones está temporalmente "
-                    "deshabilitado en esta preproducción. No envíes transcripciones, audios "
-                    "ni datos identificables a este servicio. Continuá el trabajo de sesión "
-                    "mediante la interfaz de ChatGPT acordada. La investigación general y "
-                    "el desarrollo metodológico siguen disponibles por esa interfaz."
-                ),
+                "notice": PRIVACY_WARNING,
             },
         )
     # El motor aún no está conectado; no registrar la transcripción.

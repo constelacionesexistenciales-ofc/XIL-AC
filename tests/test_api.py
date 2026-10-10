@@ -45,7 +45,7 @@ def test_process_rejects_wrong_token(monkeypatch):
     assert response.status_code == 401
 
 
-def test_process_does_not_claim_engine_is_implemented(monkeypatch):
+def test_process_returns_standard_privacy_warning_when_disabled(monkeypatch):
     monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
     monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
     response = client.post(
@@ -55,7 +55,8 @@ def test_process_does_not_claim_engine_is_implemented(monkeypatch):
     )
     assert response.status_code == 423
     assert response.json()["status"] == "temporarily_blocked"
-    assert "No envíes transcripciones" in response.json()["notice"]
+    assert "no recomendamos seguir con esta operación" in response.json()["notice"]
+    assert "No envíes" in response.json()["notice"]
 
 
 def test_process_fails_closed_when_audit_storage_fails(monkeypatch):

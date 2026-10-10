@@ -2,7 +2,7 @@
 
 **Núcleo seguro y auditable para el procesamiento y acompañamiento CFE.**
 
-Estado: **base de ingeniería 0.3.1; todavía no es candidata a producción real**.
+Estado: **base de ingeniería 0.3.2; todavía no es candidata a producción real**.
 
 ## Incluye
 - API mínima con roles, validación OIDC/JWT en modo estricto y token local solo para desarrollo.
@@ -12,6 +12,7 @@ Estado: **base de ingeniería 0.3.1; todavía no es candidata a producción real
 - Comprobación real de PostgreSQL, migraciones numeradas e idempotentes y auditoría técnica sin transcripciones.
 - Pruebas automatizadas, integración continua con PostgreSQL, análisis estático, CodeQL y Dependabot.
 - Docker Compose local con puerto publicado solo en localhost y contenedor no-root.
+- Mensaje estándar preventivo de privacidad cuando el procesamiento remoto está bloqueado.
 
 ## Inicio local con Docker
 1. Copiar `.env.example` a `.env`.
@@ -31,7 +32,9 @@ Los roles `facilitator` o `admin` permiten solicitar procesamiento; el rol `audi
 ## Modos de trabajo y privacidad
 La investigación y el desarrollo metodológico pueden continuar mediante la interfaz actual de ChatGPT. El motor autónomo de búsqueda dentro de XIL-AC aún requiere integración. Durante esta etapa, el trabajo de sesiones se realiza por la interfaz de ChatGPT; no enviar información de consultantes a la API remota.
 
-`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 con un aviso de bloqueo mientras el procesamiento esté deshabilitado. El cuerpo de una solicitud puede llegar al servidor antes del rechazo, así que no enviar contenido sensible al servicio remoto. El motor CFE sigue sin estar conectado; cuando se habilite la compuerta, la respuesta será HTTP 501 hasta que el motor exista. No están conectados un gestor de secretos, limitación distribuida ni despliegue cloud. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
+**Aviso preventivo:** “La información recibida contiene o podría contener material sensible; no recomendamos seguir con esta operación”. El aviso recuerda que las sesiones no deben enviarse a la API remota en esta etapa. No existe todavía un detector automático fiable de datos sensibles.
+
+`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 con el aviso de bloqueo mientras el procesamiento esté deshabilitado. El cuerpo de una solicitud puede llegar al servidor antes del rechazo, así que no enviar contenido sensible al servicio remoto. El motor CFE sigue sin estar conectado; cuando se habilite la compuerta, la respuesta será HTTP 501 hasta que el motor exista. No están conectados un gestor de secretos, limitación distribuida ni despliegue cloud. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
 
 Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
 
