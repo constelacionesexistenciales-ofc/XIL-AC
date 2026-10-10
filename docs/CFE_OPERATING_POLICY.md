@@ -6,11 +6,20 @@ La investigación, búsqueda web, contraste de fuentes, análisis bibliográfico
 ## Trabajo de sesiones
 Durante esta etapa, el trabajo de sesiones y los informes se realizan únicamente mediante la interfaz actual de ChatGPT con revisión humana. No enviar contenido personal de consultantes a la API remota de preproducción.
 
-## Aviso de privacidad
-**Procesamiento temporalmente no disponible.** Esta función no está habilitada en el servicio externo de preproducción. No envíes transcripciones, audios, nombres ni datos identificables a ese servicio. Continuá el trabajo de sesión mediante la interfaz de ChatGPT acordada. La investigación general y el desarrollo metodológico sí pueden continuar.
+## Recordatorio preventivo de privacidad
+Como Alexis es el único usuario operativo en esta etapa, se utiliza un aviso claro como recordatorio; no se incorporan por ahora flujos complejos de aprobación ni administración de múltiples usuarios.
+
+**Mensaje estándar:**
+
+> La información recibida contiene o podría contener material sensible; no recomendamos seguir con esta operación. En esta etapa, no envíes transcripciones, audios ni datos identificables a la API remota. Continuá el trabajo de sesiones mediante la interfaz de ChatGPT acordada. La investigación general y el desarrollo metodológico pueden continuar por esa interfaz.
+
+El aviso es preventivo y no implica que exista un detector automático fiable de información sensible. Si el contenido parece incluir datos personales o información confidencial, se muestra el recordatorio y se evita enviarlo al servicio remoto. El trabajo puede continuar por la interfaz de ChatGPT acordada, con criterio humano y evitando datos identificables innecesarios.
 
 ## Bloqueo y estado
-`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. El endpoint remoto responde con un aviso de bloqueo. Esto es una salvaguarda adicional, no una garantía para enviar datos: el cuerpo HTTP puede llegar al servidor antes del rechazo. El motor CFE no está conectado; cambiar la variable no crea el motor ni autoriza el procesamiento.
+`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. El endpoint remoto responde con el aviso de bloqueo. Esto es una salvaguarda adicional, no una garantía para enviar datos: el cuerpo HTTP puede llegar al servidor antes del rechazo. El motor CFE no está conectado; cambiar la variable no crea el motor ni autoriza el procesamiento.
+
+## Versión estimada
+La implementación propuesta corresponde a **XIL-AC 0.3.2**: mensaje estándar de privacidad, documentación operativa y prueba automatizada del aviso. No incluye detección automática de sensibilidad ni habilita el procesamiento de sesiones.
 
 ## Antes de habilitar sesiones en el futuro
 - Motor real integrado y probado de extremo a extremo.
