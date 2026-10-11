@@ -221,7 +221,10 @@ def research(
         claims=[
             abstention_claim(
                 "c1",
-                "Se recuperaron fuentes, pero todavía no existe síntesis ni contraste automatizado.",
+                (
+                    "Se recuperaron fuentes, pero todavía no existe síntesis "
+                    "ni contraste automatizado."
+                ),
             )
         ],
         limitations=[
