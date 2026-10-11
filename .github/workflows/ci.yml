@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, feat/production-readiness-rate-limits]
   pull_request:
-    branches: [main]
+    branches: [main, feat/universal-research-experience]
 permissions:
   contents: read
 concurrency:
