@@ -1,3 +1,5 @@
+import pytest
+
 from core.evidence_registry import (
     EvidenceRecord,
     ResearchClaim,
@@ -61,7 +63,7 @@ def test_explicit_abstention_is_valid_and_publishable():
 
 def test_invalid_source_url_is_rejected():
     item = EvidenceRecord("e1", "javascript:alert(1)", "Title", "Publisher", "2026-10-11")
-    assert "valid_http_url_required" in item.validate()
+    assert "safe_https_url_required" in item.validate()
 
 
 def test_duplicate_evidence_ids_are_rejected():
@@ -83,9 +85,6 @@ def test_disputed_claim_requires_caveat():
     )
     assert not report.is_publishable()
 
-
-
-import pytest
 
 
 @pytest.mark.parametrize(
