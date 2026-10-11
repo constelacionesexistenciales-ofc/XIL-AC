@@ -27,7 +27,9 @@ class Settings:
     oidc_jwks_url: str = os.getenv("OIDC_JWKS_URL", "").strip()
     oidc_roles_claim: str = os.getenv("OIDC_ROLES_CLAIM", "roles").strip()
     research_rate_limit_requests: int = int(os.getenv("RESEARCH_RATE_LIMIT_REQUESTS", "30"))
-    research_rate_limit_window_seconds: int = int(os.getenv("RESEARCH_RATE_LIMIT_WINDOW_SECONDS", "60"))
+    research_rate_limit_window_seconds: int = int(
+        os.getenv("RESEARCH_RATE_LIMIT_WINDOW_SECONDS", "60")
+    )
 
     def validate(self) -> None:
         if self.environment not in {"development", "test", "staging", "production"}:
