@@ -7,7 +7,21 @@ import os
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+
+class _HTTPSProviderRedirectHandler(HTTPRedirectHandler):
+    """Allow redirects only to the fixed HTTPS provider host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urlparse(newurl)
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname != "api.search.brave.com"
+            or parsed.port not in (None, 443)
+        ):
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 class ResearchError(Exception):
@@ -48,7 +62,7 @@ def search_web(query: str, count: int = 5) -> dict:
     )
 
     try:
-        with urlopen(request, timeout=8) as response:
+        with build_opener(_HTTPSProviderRedirectHandler()).open(request, timeout=8) as response:
             raw = response.read(1_000_001)
             if len(raw) > 1_000_000:
                 raise ResearchProviderUnavailable
