@@ -19,7 +19,6 @@ services:
     command: ["python", "scripts/migrate.py"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +34,7 @@ services:
       HUMAN_OVERRIDE_ENABLED: ${HUMAN_OVERRIDE_ENABLED:-true}
       XILAC_API_TOKEN: ${XILAC_API_TOKEN:?Set XILAC_API_TOKEN in .env}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
