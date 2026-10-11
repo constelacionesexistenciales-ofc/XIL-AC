@@ -217,3 +217,19 @@ def test_research_requires_configured_provider(monkeypatch):
     )
     assert response.status_code == 503
     assert "no está configurada" in response.json()["detail"]
+
+
+def test_research_rejects_blank_queries(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "   "},
+    )
+    assert response.status_code == 422
+
+
+def test_research_ui_is_served_by_the_api():
+    response = client.get("/research-ui/")
+    assert response.status_code == 200
+    assert "INVESTIGACIÓN UNIVERSAL" in response.text
