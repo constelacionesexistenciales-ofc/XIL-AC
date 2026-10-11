@@ -66,7 +66,15 @@ def test_research_success_returns_trace_and_disclaims_synthesis(monkeypatch):
             "query": query,
             "retrieved_at": "2026-10-11T00:00:00+00:00",
             "result_count": 1,
-            "results": [{"title": "Source", "url": "https://example.org/source", "domain": "example.org", "description": "Evidence", "published_at": None}],
+            "results": [
+                {
+                    "title": "Source",
+                    "url": "https://example.org/source",
+                    "domain": "example.org",
+                    "description": "Evidence",
+                    "published_at": None,
+                }
+            ],
         },
     )
     response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation"})
