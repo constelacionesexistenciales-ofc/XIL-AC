@@ -58,7 +58,7 @@ class ResearchClaim:
             errors.append("claim_id_required")
         if not self.text.strip():
             errors.append("claim_text_required")
-        if not self.evidence_ids:
+        if not self.evidence_ids and not (self.status == "abstain" and self.caveat.strip()):
             errors.append("claim_requires_evidence_or_explicit_abstention")
         if self.confidence is not None and not 0.0 <= self.confidence <= 1.0:
             errors.append("confidence_must_be_between_0_and_1")
