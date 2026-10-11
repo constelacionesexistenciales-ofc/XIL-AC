@@ -18,6 +18,7 @@ from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
 from core.privacy_detector import detect_research_sensitive_content, detect_sensitive_content
 from core.rate_limit import RateLimitExceeded, RateLimitStorageUnavailable, enforce_rate_limit
+from core.research_assessment import assess_source_metadata
 from core.research import (
     ResearchProviderNotConfigured,
     ResearchProviderUnavailable,
@@ -267,6 +268,7 @@ def research(
             "synthesis_status": "not_generated",
             "evidence_registry_valid": True,
             "research_report": research_report.to_dict(),
+            "source_assessment": assess_source_metadata(result.get("results", [])),
             **result,
         }
     )
