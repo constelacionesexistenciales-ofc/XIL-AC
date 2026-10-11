@@ -160,3 +160,19 @@ def test_self_hosted_redirect_handler_rejects_cross_origin():
         request, None, 302, "Found", {}, "http://other-service:8080/search"
     )
     assert rejected is None
+
+
+def test_self_hosted_searxng_rejects_invalid_port(monkeypatch):
+    monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
+    monkeypatch.setenv("SEARXNG_BASE_URL", "http://searxng:not-a-port")
+    with pytest.raises(research.ResearchProviderNotConfigured):
+        research.search_web("public research question")
+
+
+def test_self_hosted_redirect_handler_rejects_invalid_port():
+    handler = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    request = research.Request("http://searxng:8080/search")
+    rejected = handler.redirect_request(
+        request, None, 302, "Found", {}, "http://searxng:not-a-port/search"
+    )
+    assert rejected is None
