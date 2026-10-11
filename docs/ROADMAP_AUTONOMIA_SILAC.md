@@ -143,9 +143,9 @@ Estos niveles son una propuesta de arquitectura; no son certificaciones actuales
 - [x] Verificación de CI y pruebas de navegador satisfactorias en el commit `6c26e40b605753f9d511ad7dd24ac210b0dde7df`.
 - [x] Identificación de bloqueos: ramas sin protección, PR encadenadas sin integrar, OIDC real por verificar, cuotas, observabilidad, recuperación y motor de investigación incompleto.
 - [x] Creación de esta hoja de ruta en una rama de auditoría.
-- [ ] Revisión y CI de esta hoja de ruta.
+- [ ] Revisión y CI de esta hoja de ruta y de los cambios de workflows.
 - [ ] Integración controlada de la secuencia PR #13–#15.
-- [ ] Cierre de los pasos 1–13.
+- [x] Ampliar filtros de CI y CodeQL a ramas activas de desarrollo en la PR #16; falta confirmar las ejecuciones del SHA final.\n- [ ] Cierre de los pasos 1–13.
 - [ ] Cierre de los pasos 14–20 y evaluación de salida de etapa.
 - [ ] Continuar etapas III–VI según las puertas de aceptación anteriores.
 
@@ -187,3 +187,7 @@ La comparación de archivos modificados revela rutas compartidas. No conviene fu
 ### Estado de la validación de esta hoja de ruta
 
 La PR #16 se encuentra abierta como borrador. Sus ejecuciones iniciales de CI y CodeQL están en curso; el resultado final debe comprobarse por SHA antes de marcar el documento como validado.
+
+## 8. Limitaciones de configuración del repositorio
+
+La consulta de rulesets de GitHub devolvió un error que indica que, para este repositorio privado, esa función requiere actualizar el plan o hacer público el repositorio. No se modificó la visibilidad del repositorio. La protección de `main` debe resolverse conservando la privacidad (plan con soporte para la regla o un control equivalente disponible) antes de tratarla como cerrada. No se debe publicar el repositorio solo para obtener reglas de protección sin evaluar antes el riesgo de exponer código y configuración.
