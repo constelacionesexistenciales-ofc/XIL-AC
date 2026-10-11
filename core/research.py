@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 from datetime import datetime, timezone
@@ -14,11 +15,17 @@ class _HTTPSProviderRedirectHandler(HTTPRedirectHandler):
     """Allow redirects only to the fixed HTTPS provider host."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        parsed = urlparse(newurl)
+        try:
+            parsed = urlparse(newurl)
+            valid_port = parsed.port in (None, 443)
+        except ValueError:
+            return None
         if (
             parsed.scheme != "https"
             or parsed.hostname != "api.search.brave.com"
-            or parsed.port not in (None, 443)
+            or parsed.username is not None
+            or parsed.password is not None
+            or not valid_port
         ):
             return None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -40,6 +47,55 @@ class ResearchRateLimited(ResearchError):
     pass
 
 
+def _safe_result_url(value: str) -> tuple[str, str] | None:
+    """Accept only bounded public HTTPS URLs suitable for display as sources.
+
+    Search results are not fetched by this function. The checks also avoid
+    presenting credential-bearing, nonstandard-port, or local-network URLs as
+    ordinary research sources.
+    """
+    if not value or len(value) > 2048 or any(ord(char) < 32 for char in value):
+        return None
+    if any(char.isspace() for char in value):
+        return None
+    try:
+        parsed = urlparse(value)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme != "https"
+        or not hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in (None, 443)
+    ):
+        return None
+
+    hostname = hostname.rstrip(".").lower()
+    if (
+        hostname == "localhost"
+        or hostname.endswith((".localhost", ".local", ".internal"))
+    ):
+        return None
+    try:
+        address = ipaddress.ip_address(hostname.strip("[]"))
+    except ValueError:
+        address = None
+    if address is not None and (
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_multicast
+        or address.is_reserved
+        or address.is_unspecified
+    ):
+        return None
+
+    return value, hostname
+
+
 def search_web(query: str, count: int = 5) -> dict:
     """Consulta Brave Search API y devuelve metadatos normalizados.
 
@@ -50,7 +106,8 @@ def search_web(query: str, count: int = 5) -> dict:
     if not api_key:
         raise ResearchProviderNotConfigured
 
-    params = urlencode({"q": query, "count": max(1, min(count, 10))})
+    safe_count = max(1, min(count, 10))
+    params = urlencode({"q": query, "count": safe_count})
     request = Request(
         f"https://api.search.brave.com/res/v1/web/search?{params}",
         headers={
@@ -93,15 +150,18 @@ def search_web(query: str, count: int = 5) -> dict:
         description = item.get("description")
         if not isinstance(title, str) or not isinstance(url, str):
             continue
-        parsed = urlparse(url)
-        if parsed.scheme != "https" or not parsed.hostname or url in seen:
+        safe_url = _safe_result_url(url)
+        if safe_url is None:
             continue
-        seen.add(url)
+        normalized_url, hostname = safe_url
+        if normalized_url in seen:
+            continue
+        seen.add(normalized_url)
         results.append(
             {
                 "title": title[:300],
-                "url": url[:2048],
-                "domain": parsed.hostname[:255],
+                "url": normalized_url,
+                "domain": hostname[:255],
                 "description": description[:1000] if isinstance(description, str) else "",
                 "published_at": (
                     item.get("page_age")[:100]
@@ -110,7 +170,7 @@ def search_web(query: str, count: int = 5) -> dict:
                 ),
             }
         )
-        if len(results) >= count:
+        if len(results) >= safe_count:
             break
 
     return {
