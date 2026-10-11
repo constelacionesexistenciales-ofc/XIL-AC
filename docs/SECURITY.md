@@ -3,15 +3,20 @@
 - No guardar claves, tokens, cadenas de conexión ni transcripciones en el repositorio.
 - En producción y preproducción remota, usar variables secretas del proveedor y rotar credenciales expuestas.
 - El token compartido solo está habilitado en desarrollo/pruebas locales; el modo estricto exige OIDC/JWT y validación de emisor, audiencia, firma, expiración y roles.
-- El acceso a procesamiento requiere el rol `facilitator` o `admin`; el rol `auditor` no puede procesar. En la etapa privada, solo Alexis debe recibir el rol operativo.
+- El acceso a procesamiento e investigación requiere el rol facilitator o admin; el rol auditor no puede invocar esos endpoints. En la etapa privada, limitar el rol operativo a usuarios autorizados.
 - El cuerpo HTTP tiene un límite de 256 KiB para reducir el riesgo de agotamiento de memoria.
-- Los eventos técnicos guardan identificador de ejecución, tipo, actor y resultado; nunca deben guardar el texto de la sesión.
+- Los eventos técnicos guardan identificador de ejecución, tipo, actor y resultado; no deben guardar consultas, transcripciones ni texto de sesión.
 - La solicitud se bloquea si no se puede persistir el evento de auditoría.
+- **POST /v1/research** envía la consulta al proveedor externo solo después de autenticación, autorización, control heurístico de privacidad y auditoría previa. El usuario debe saber que la consulta sale hacia ese proveedor y no debe enviar datos personales, de consultantes ni información confidencial.
+- **BRAVE_SEARCH_API_KEY** es un secreto de ejecución. No incluir la clave en archivos versionados, mensajes de error, interfaz ni registros.
+- La búsqueda web limita el número de resultados, el tiempo de espera y el tamaño de respuesta; descarta URL que no usen HTTPS. Esto no demuestra que el contenido de cada fuente sea correcto o seguro.
+- La detección de privacidad es heurística: puede equivocarse y no garantiza detectar todo contenido sensible. No sustituye un control local previo cuando se trabaje con información confidencial.
 - La URL de una API alojada en un plan gratuito puede ser pública. No confiar en que una dirección difícil de adivinar constituya un control de acceso.
-- No enviar sesiones reales a la API de preproducción mientras el motor CFE, la integración real con modelos, las políticas de datos, la recuperación y las pruebas de seguridad sigan pendientes. La API actual responde HTTP 501 en `POST /v1/process`.
+- No enviar sesiones reales a la API remota. **POST /v1/process** permanece cerrado por defecto y el motor CFE no está conectado.
 - No usar transcripciones identificables en pruebas ni incluirlas en registros, errores o incidencias.
 - Antes de habilitar contenido real, verificar consentimiento, minimización, retención y borrado; documentar qué proveedores reciben datos y por cuánto tiempo.
 - No usar planes gratuitos sin copias de seguridad como archivo maestro de sesiones. Mantener cualquier copia autorizada cifrada y comprobar restauración.
 - La integración OIDC debe probarse con el proveedor real; confirmar el claim de roles en un token real sin copiar ni publicar el token.
+- La búsqueda todavía requiere límites de solicitudes compartidos entre instancias, límites de gasto, OIDC real y verificación de extremo a extremo antes de producción.
 - CI ejecuta pruebas unitarias e integración PostgreSQL; CodeQL analiza el código y Dependabot propone actualizaciones.
 - Reportar vulnerabilidades en privado al mantenedor; no publicar datos personales ni secretos en incidencias.
