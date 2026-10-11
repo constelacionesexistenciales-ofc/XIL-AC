@@ -19,7 +19,7 @@ Este informe separa código integrado, CI, validación en entorno y autorizació
 ## Resultado de los seis objetivos de trabajo
 
 1. **Auditoría maestra:** cerrada en #16.
-2. **Conflictos y dependencias:** resueltos por reconstrucción controlada de #11 → #19 y #13 → #20; #14 → #22 y #15 → #23 quedaron integradas en ese orden. Las PR originales #11 y #13 pueden seguir abiertas como antecedentes; las integraciones vigentes son #19 y #20.
+2. **Conflictos y dependencias:** resueltos por reconstrucción controlada de #11 → #19 y #13 → #20; #14 → #22 y #15 → #23 quedaron integradas en ese orden. Las PR originales #11 y #13 se cerraron como sustituidas, con explicación en sus cuerpos; no se fusionaron directamente. Sus implementaciones reconstruidas se integraron mediante #19 y #20.
 3. **Integración y pruebas:** #19, #20, #22, #23 y #24 tienen CI de rama exitosa; las CI posteriores de main están confirmadas para #19–#23. La ejecución post-#24 estaba en curso en la última consulta.
 4. **Informe técnico:** este documento actualiza el estado y las evidencias en un único lugar.
 5. **Investigación y autonomía:** se integró búsqueda web inicial con trazabilidad de fuentes y abstención; se añadió una primera puerta de políticas de autonomía. No existe todavía síntesis automática contrastada ni planificador de tareas que ejecute acciones.
