@@ -16,6 +16,8 @@ def main() -> None:
         raise SystemExit("DATABASE_URL es obligatoria para ejecutar migraciones.")
 
     with psycopg.connect(dsn, connect_timeout=5) as conn:
+        # Serialize migration runners across instances; session lock releases on disconnect.
+        conn.execute("SELECT pg_advisory_lock(721840913)")
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -39,6 +41,7 @@ def main() -> None:
                     (version,),
                 )
             print(f"Aplicada migración: {version}")
+        conn.execute("SELECT pg_advisory_unlock(721840913)")
 
 
 if __name__ == "__main__":

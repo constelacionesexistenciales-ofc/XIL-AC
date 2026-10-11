@@ -13,14 +13,15 @@
 - [x] Validación de arranque que impide activar el procesamiento de sesiones en staging/producción antes de conectar y aprobar el motor CFE.
 
 ## Bloqueos antes de exponer a usuarios
-- [ ] Ejecutar y aprobar CI en el cambio propuesto: pruebas, Ruff, Compose y PostgreSQL de integración.
+- [ ] Ejecutar y aprobar CI en el cambio propuesto: pruebas, Ruff, Bandit, Compose y PostgreSQL de integración.
 - [ ] Integrar la inspección local previa al envío en el cliente/interfaz. Existe una utilidad CLI inicial (`python -m scripts.privacy_preflight`), pero no está integrada automáticamente con una interfaz ni bloquea a otros clientes.
 - [ ] Medir falsos positivos y falsos negativos con un conjunto sintético representativo.
 - [ ] Configurar y verificar un proveedor OIDC real y limitar el acceso operativo a la identidad autorizada.
 - [ ] Elegir y configurar un gestor de secretos administrado.
 - [ ] Conectar y probar el motor CFE y los proveedores de modelos con límites de datos documentados.
 - [ ] Validar la ruta de investigación web en una rama candidata: autenticación, detección de datos personales, auditoría previa, fallos del proveedor, límites de solicitudes y pruebas E2E con una clave gestionada como secreto.
-- [ ] Implementar límites de solicitudes, observabilidad, retención y borrado.
+- [ ] Verificar límite compartido en PostgreSQL, concurrencia, respuestas 429/503 y ejecución programada de limpieza.
+- [ ] Implementar observabilidad, retención y borrado.
 - [ ] Probar copias de seguridad, restauración, permisos, aislamiento, seguridad y carga.
 - [ ] Desplegar en infraestructura real y verificar TLS, base de datos y recuperación.
 - [ ] Obtener aprobación humana explícita antes de habilitar el uso real.

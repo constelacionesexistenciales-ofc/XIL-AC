@@ -33,6 +33,7 @@ def test_research_blocks_sensitive_query_before_provider(monkeypatch):
 
 def test_research_blocks_when_audit_fails(monkeypatch):
     headers = _auth(monkeypatch)
+    monkeypatch.setattr(api, "enforce_rate_limit", lambda *args, **kwargs: None)
     def fail_audit(*args):
         raise RuntimeError("storage unavailable")
     monkeypatch.setattr(api, "record_audit_event", fail_audit)
@@ -45,6 +46,7 @@ def test_research_blocks_when_audit_fails(monkeypatch):
 
 def test_research_provider_not_configured_fails_closed(monkeypatch):
     headers = _auth(monkeypatch)
+    monkeypatch.setattr(api, "enforce_rate_limit", lambda *args, **kwargs: None)
     monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
     monkeypatch.setattr(
         api,
@@ -57,6 +59,7 @@ def test_research_provider_not_configured_fails_closed(monkeypatch):
 
 def test_research_success_returns_trace_and_disclaims_synthesis(monkeypatch):
     headers = _auth(monkeypatch)
+    monkeypatch.setattr(api, "enforce_rate_limit", lambda *args, **kwargs: None)
     monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
     monkeypatch.setattr(
         api,

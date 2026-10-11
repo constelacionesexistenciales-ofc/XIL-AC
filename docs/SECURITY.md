@@ -15,3 +15,6 @@
 - La integración OIDC debe probarse con el proveedor real; confirmar el claim de roles en un token real sin copiar ni publicar el token.
 - CI ejecuta pruebas unitarias e integración PostgreSQL; CodeQL analiza el código y Dependabot propone actualizaciones.
 - Reportar vulnerabilidades en privado al mantenedor; no publicar datos personales ni secretos en incidencias.
+
+- La búsqueda web debe aplicar límites compartidos por identidad antes de llamar al proveedor; si PostgreSQL no permite comprobar el límite, la solicitud se bloquea.
+- El limpiador de buckets antiguos debe ejecutarse con una periodicidad definida y sin registrar identidades ni consultas.
