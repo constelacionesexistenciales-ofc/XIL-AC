@@ -101,5 +101,77 @@ def test_redirect_handler_rejects_non_https_and_other_hosts():
     external = handler.redirect_request(
         request, None, 302, "Found", {}, "https://evil.example/x"
     )
+    credentials = handler.redirect_request(
+        request, None, 302, "Found", {},
+        "https://user:password@api.search.brave.com/x",
+    )
+    unusual_port = handler.redirect_request(
+        request, None, 302, "Found", {}, "https://api.search.brave.com:8443/x"
+    )
     assert insecure is None
     assert external is None
+    assert credentials is None
+    assert unusual_port is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://example.org/source",
+        "https://user:password@example.org/source",
+        "https://example.org:8443/source",
+        "https://localhost/admin",
+        "https://service.local/path",
+        "https://127.0.0.1/admin",
+        "https://192.168.1.10/admin",
+        "https://[::1]/admin",
+        "https://example.org/has space",
+        "https://example.org/" + "x" * 2050,
+        "https://example.org:invalid/path",
+    ],
+)
+def test_safe_result_url_rejects_unsafe_or_malformed_urls(url):
+    assert research._safe_result_url(url) is None
+
+
+@pytest.mark.parametrize(
+    ("url", "hostname"),
+    [
+        ("https://example.org/research", "example.org"),
+        ("https://example.org:443/research", "example.org"),
+        ("https://8.8.8.8/research", "8.8.8.8"),
+    ],
+)
+def test_safe_result_url_accepts_public_https_sources(url, hostname):
+    assert research._safe_result_url(url) == (url, hostname)
+
+
+def test_search_web_discards_urls_with_credentials_and_local_hosts(monkeypatch):
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "test-provider-secret")
+    payload = {
+        "web": {
+            "results": [
+                {"title": "Credential URL", "url": "https://user:pass@example.org/x"},
+                {"title": "Local URL", "url": "https://localhost/admin"},
+                {"title": "Valid source", "url": "https://example.org/source"},
+            ]
+        }
+    }
+    monkeypatch.setattr(research, "build_opener", lambda *handlers: FakeOpener(payload))
+
+    result = research.search_web("climate adaptation", count=5)
+
+    assert result["result_count"] == 1
+    assert result["results"][0]["url"] == "https://example.org/source"
+
+
+def test_search_web_rejects_malformed_results_collection(monkeypatch):
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "test-provider-secret")
+    monkeypatch.setattr(
+        research,
+        "build_opener",
+        lambda *handlers: FakeOpener({"web": {"results": "not-a-list"}}),
+    )
+
+    with pytest.raises(research.ResearchProviderUnavailable):
+        research.search_web("climate adaptation")

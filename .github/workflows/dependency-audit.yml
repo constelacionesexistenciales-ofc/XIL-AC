@@ -1,0 +1,32 @@
+name: Dependency Security Audit
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'feat/**', 'feature/**', 'audit/**']
+  schedule:
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dependency-audit-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Audit installed dependency tree
+        run: |
+          pip install "pip-audit>=2.7,<3.0"
+          pip-audit

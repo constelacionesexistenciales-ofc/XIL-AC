@@ -1,52 +1,57 @@
 # XIL-AC
 
-**Núcleo seguro y auditable para el procesamiento y acompañamiento CFE.**
+**Núcleo seguro y auditable para investigación general y para el futuro procesamiento CFE.**
 
-Estado: **base de ingeniería 0.4.1; todavía no es candidata a producción real**.
+Estado: **base de ingeniería 0.4.1; no aprobada para producción real**.
 
-## Incluye
-- API mínima con roles, validación OIDC/JWT en modo estricto y token local solo para desarrollo.
-- Validación estricta de configuración y uso obligatorio de HTTPS para el proveedor de identidad.
-- Límite de 256 KiB para el cuerpo HTTP antes de analizar la solicitud.
-- Identificador de ejecución y control de riesgo que bloquea niveles desconocidos.
-- Comprobación de PostgreSQL, migraciones y auditoría técnica sin transcripciones.
-- Detector heurístico de posibles datos sensibles, con categorías de riesgo y sin devolver los valores coincidentes.
-- Pruebas automatizadas, integración continua con PostgreSQL, análisis estático, CodeQL y Dependabot.
-- Docker Compose local con puerto publicado solo en localhost y contenedor no-root.
+## Capacidades integradas en `main`
 
-## Privacidad y modos de trabajo
-La investigación general ya tiene una primera ruta de búsqueda web en la rama de integración: requiere token autorizado y clave externa configurada. Devuelve resultados recuperados, pero todavía no sintetiza ni contrasta afirmaciones; no debe describirse como motor autónomo completo. Durante esta etapa, el trabajo de sesiones se realiza por la interfaz de ChatGPT; no enviar información de consultantes a la API remota.
+- API con autenticación, autorización por roles y validación estricta de configuración.
+- Límite de 256 KiB para el cuerpo HTTP.
+- Identificadores de ejecución, control de riesgo y auditoría técnica sin transcripciones.
+- PostgreSQL, migraciones y limitación compartida de solicitudes para investigación.
+- Primera ruta de búsqueda web protegida mediante Brave Search API.
+- Registro estructurado de fuentes y abstención explícita cuando todavía no hay síntesis.
+- Interfaz universal de investigación en `/research-ui/`.
+- Pruebas automatizadas, integración continua, Ruff, Bandit y pruebas de navegador en flujos separados.
+- Contenedor no-root y puerto local enlazado a localhost para desarrollo.
 
-El detector identifica señales explícitas como correos, teléfonos, documentos etiquetados, nombres etiquetados y referencias a salud, violencia, abuso o autolesión. Es heurístico: puede equivocarse y no garantiza detectar todo contenido sensible.
+## Investigación web: alcance actual
 
-**Importante:** el detector integrado en la API se ejecuta después de que el cuerpo de la solicitud llegó al servidor. Es una barrera adicional, no un filtro previo al envío. Hace falta una interfaz local que inspeccione el contenido antes de transmitirlo; hasta entonces, no envíes contenido de consultantes a la API remota.
+La ruta `POST /v1/research` requiere autenticación y rol autorizado, aplica límites compartidos, evalúa señales heurísticas de privacidad y registra el evento de auditoría antes de enviar la consulta al proveedor. Requiere `BRAVE_SEARCH_API_KEY` configurada fuera del repositorio.
 
-`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 cuando detecta señales sensibles o mientras el procesamiento esté deshabilitado. El motor CFE sigue sin estar conectado y no hay despliegue cloud verificado. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
+La recuperación devuelve resultados del proveedor y metadatos de procedencia. **Todavía no descarga y evalúa sistemáticamente el contenido de los artículos, no contrasta semánticamente afirmaciones ni produce una síntesis autónoma verificada.** No se debe presentar como motor de investigación completo.
 
-## Inspección local preventiva de privacidad
+La respuesta incorpora una evaluación explícita de metadatos (`source_assessment`): cantidad de fuentes, dominios únicos, diversidad de dominios, duplicados y campos faltantes. No asigna una puntuación de fiabilidad ni afirma que el contenido esté verificado. El registro de evidencia exige URL HTTPS públicas y rechaza hosts locales/privados, credenciales embebidas y puertos no estándar.
 
-Hay una primera utilidad de inspección local que no realiza conexiones de red y no imprime el texto recibido:
+Los resultados se filtran a enlaces HTTPS públicos de formato permitido. Ese filtro reduce riesgos en los enlaces mostrados, pero no demuestra que una fuente sea fiable ni que su contenido sea verdadero.
+
+## Privacidad y procesamiento CFE
+
+`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` sigue bloqueado mientras la función no esté implementada y aprobada. No enviar información de consultantes, transcripciones ni datos confidenciales a la API remota.
+
+El detector de privacidad es heurístico: puede producir falsos positivos y falsos negativos. La detección dentro de la API ocurre después de que el cuerpo llegó al servidor; no sustituye la inspección local previa al envío. Existe una utilidad local inicial:
 
 ```bash
 python -m scripts.privacy_preflight < texto.txt
 ```
 
-Devuelve categorías y nivel de riesgo. Código de salida `0`: no detectó señales explícitas; `2`: bloquea por señales detectadas o contenido no verificable. Un resultado sin señales **no demuestra** que el texto esté libre de datos sensibles. Esta utilidad no está integrada automáticamente con una interfaz ni sustituye la compuerta remota.
+Un resultado sin señales detectadas no garantiza que el texto esté libre de información sensible.
 
-## Inicio local con Docker
+## Inicio local para desarrollo
+
 1. Copiar `.env.example` a `.env`.
-2. Reemplazar `XILAC_API_TOKEN` y `POSTGRES_PASSWORD` por valores aleatorios largos. Son solo secretos de desarrollo local.
-3. Ejecutar `docker compose up --build`.
-4. Consultar `http://127.0.0.1:8000/health/live` y `/health/ready`.
+2. Sustituir los valores de desarrollo por secretos aleatorios propios.
+3. Configurar `BRAVE_SEARCH_API_KEY` solo si se habilita la búsqueda real. Nunca guardar una clave real en Git.
+4. Ejecutar `docker compose up --build`.
+5. Comprobar `http://127.0.0.1:8000/health/live` y `/health/ready`.
 
-Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
+Docker Compose es una configuración de desarrollo local, no una receta de despliegue productivo.
 
-## Documentación
-- [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
-- [Puerta de producción](docs/PRODUCTION_GATE.md)
-- [Seguridad y datos](docs/SECURITY.md)
+## Seguridad y estado de producción
 
+La revisión de CodeQL del flujo anterior falló al intentar publicar resultados porque GitHub indicó que el análisis de código no estaba habilitado para el repositorio. Esto es un problema de configuración/entitlement del análisis; no prueba que el código esté libre de vulnerabilidades ni que se haya encontrado una vulnerabilidad concreta. CI también ejecuta Bandit como control estático adicional. Se agregó un flujo independiente de auditoría de dependencias con `pip-audit`; su resultado debe revisarse en cada ejecución y no reemplaza CodeQL.
 
-## Prototipo de investigación web
+Antes de producción todavía hacen falta, como mínimo: prueba de extremo a extremo con credenciales reales gestionadas como secretos; resolver la disponibilidad del análisis de código; verificar OIDC real y gestión de secretos; completar observabilidad, retención/borrado, límites de gasto, pruebas de carga y recuperación; y aprobar formalmente la puerta de producción.
 
-La ruta propuesta `POST /v1/research` exige autenticación y rol autorizado, bloquea consultas con señales de datos personales, registra el evento antes de contactar al proveedor y falla de forma cerrada si la auditoría o la configuración no están disponibles. La interfaz se sirve en `/research-ui/`. Para habilitar búsquedas hay que configurar `BRAVE_SEARCH_API_KEY` como secreto fuera del repositorio. La consulta se transmite al proveedor externo; no usar consultas identificables ni información de consultantes. Esta rama requiere CI y revisión antes de integrarse en `main`.
+Consultar [Puerta de producción](docs/PRODUCTION_GATE.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md), [seguridad y datos](docs/SECURITY.md), [política operativa CFE](docs/CFE_OPERATING_POLICY.md) y [último informe de ejecución](docs/EXECUTION_REPORT_2026-10-11.md).
