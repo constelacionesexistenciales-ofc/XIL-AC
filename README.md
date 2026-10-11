@@ -47,5 +47,6 @@ Docker Compose es solo para desarrollo local, no una receta de despliegue produc
 
 - [Plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md)
 - [Seguridad y datos](docs/SECURITY.md)
-- [Puerta de producción](docs/PRODUCTION_GATE.md)\n- [Listado priorizado de pendientes de producción](docs/PRODUCTION_BACKLOG.md)
+- [Puerta de producción](docs/PRODUCTION_GATE.md)
+- [Listado priorizado de pendientes de producción](docs/PRODUCTION_BACKLOG.md)
 - [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
