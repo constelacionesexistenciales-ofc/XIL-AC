@@ -1,37 +1,51 @@
 # XIL-AC
 
-**Núcleo seguro y auditable para el procesamiento y acompañamiento CFE.**
+**Núcleo seguro y auditable para investigación y acompañamiento CFE.**
 
-Estado: **base de ingeniería 0.4.0; todavía no es candidata a producción real**.
+Estado: **integración inicial de búsqueda web en revisión; todavía no es candidata a producción real**.
 
 ## Incluye
-- API mínima con roles, validación OIDC/JWT en modo estricto y token local solo para desarrollo.
-- Validación estricta de configuración y uso obligatorio de HTTPS para el proveedor de identidad.
-- Límite de 256 KiB para el cuerpo HTTP antes de analizar la solicitud.
-- Identificador de ejecución y control de riesgo que bloquea niveles desconocidos.
-- Comprobación de PostgreSQL, migraciones y auditoría técnica sin transcripciones.
-- Detector heurístico de posibles datos sensibles, con categorías de riesgo y sin devolver los valores coincidentes.
+
+- API con autenticación, roles y validación OIDC/JWT estricta en staging/producción.
+- Límite de 256 KiB para el cuerpo HTTP.
+- Identificador de ejecución, control de riesgo y auditoría técnica sin consultas ni transcripciones.
+- Detector heurístico de posibles datos sensibles.
+- Endpoint protegido **POST /v1/research** con adaptador de búsqueda web, límite de resultados, tiempo de espera y validación de URL HTTPS.
+- Interfaz visual en **/research-ui/** que muestra fuentes reales devueltas por el proveedor configurado.
 - Pruebas automatizadas, integración continua con PostgreSQL, análisis estático, CodeQL y Dependabot.
-- Docker Compose local con puerto publicado solo en localhost y contenedor no-root.
+- Docker Compose local y contenedor no-root.
+
+## Investigación web
+
+La búsqueda usa Brave Search API cuando se configura **BRAVE_SEARCH_API_KEY** como secreto del entorno. No guardes una clave real en GitHub ni en archivos versionados. La consulta se envía al proveedor externo, por lo que la interfaz avisa que no deben introducirse datos personales, información confidencial ni sesiones de consultantes.
+
+Para utilizarla en local:
+1. Copiar **.env.example** a **.env**.
+2. Reemplazar los secretos de desarrollo por valores aleatorios y configurar **BRAVE_SEARCH_API_KEY** en el entorno local.
+3. Iniciar la API y abrir **http://127.0.0.1:8000/research-ui/**.
+4. Introducir un token autorizado.
+
+Si falta la clave del proveedor, la búsqueda falla de forma explícita. Esta fase recupera enlaces y descripciones; **no** genera todavía una síntesis automática, no evalúa completamente la calidad de las fuentes y no debe considerarse un motor de investigación completo.
 
 ## Privacidad y modos de trabajo
-La investigación y el desarrollo metodológico pueden continuar mediante la interfaz actual de ChatGPT. El motor autónomo de búsqueda dentro de XIL-AC aún requiere integración. Durante esta etapa, el trabajo de sesiones se realiza por la interfaz de ChatGPT; no enviar información de consultantes a la API remota.
 
-El detector identifica señales explícitas como correos, teléfonos, documentos etiquetados, nombres etiquetados y referencias a salud, violencia, abuso o autolesión. Es heurístico: puede equivocarse y no garantiza detectar todo contenido sensible.
+**CFE_SESSION_PROCESSING_ENABLED=false** por defecto. **POST /v1/process** permanece bloqueado y el motor CFE no está conectado. No enviar transcripciones ni datos identificables de consultantes a la API remota. El detector es heurístico y no garantiza detectar todo contenido sensible.
 
-**Importante:** el detector integrado en la API se ejecuta después de que el cuerpo de la solicitud llegó al servidor. Es una barrera adicional, no un filtro previo al envío. Hace falta una interfaz local que inspeccione el contenido antes de transmitirlo; hasta entonces, no envíes contenido de consultantes a la API remota.
-
-`CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 cuando detecta señales sensibles o mientras el procesamiento esté deshabilitado. El motor CFE sigue sin estar conectado y no hay despliegue cloud verificado. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
+La búsqueda requiere completar la configuración de secretos, OIDC real, límites de solicitudes compartidos, observabilidad, pruebas de seguridad y la puerta de producción antes de exponerse a usuarios.
 
 ## Inicio local con Docker
-1. Copiar `.env.example` a `.env`.
-2. Reemplazar `XILAC_API_TOKEN` y `POSTGRES_PASSWORD` por valores aleatorios largos. Son solo secretos de desarrollo local.
-3. Ejecutar `docker compose up --build`.
-4. Consultar `http://127.0.0.1:8000/health/live` y `/health/ready`.
+
+1. Copiar **.env.example** a **.env**.
+2. Reemplazar **XILAC_API_TOKEN** y **POSTGRES_PASSWORD** por valores aleatorios largos.
+3. Configurar **BRAVE_SEARCH_API_KEY** fuera del repositorio.
+4. Ejecutar **docker compose up --build**.
+5. Consultar **http://127.0.0.1:8000/health/live**, **/health/ready** y abrir **/research-ui/**.
 
 Docker Compose es solo para desarrollo local, no una receta de despliegue productivo.
 
 ## Documentación
-- [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
-- [Puerta de producción](docs/PRODUCTION_GATE.md)
+
+- [Plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md)
 - [Seguridad y datos](docs/SECURITY.md)
+- [Puerta de producción](docs/PRODUCTION_GATE.md)
+- [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
