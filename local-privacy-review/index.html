@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'">
+<title>XIL-AC · Revisión local de privacidad</title>
+<style>
+:root{color-scheme:light;--ink:#202124;--muted:#5f6368;--line:#d8dadd;--paper:#fff;--wash:#f5f6f7;--warn:#8a3b00;--warnbg:#fff2e5;--ok:#215b36;--okbg:#eaf5ee;--blue:#254c77}
+*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 16px 48px}.top{margin-bottom:20px}.eyebrow{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-size:clamp(1.65rem,5vw,2.35rem);line-height:1.15;margin:.35rem 0 .7rem}h2{font-size:1.1rem;margin:0 0 .5rem}
+p{margin:.4rem 0 .8rem}.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+.notice{border-left:5px solid var(--warn);background:var(--warnbg);padding:14px 16px;border-radius:8px}.notice strong{display:block;margin-bottom:3px}
+textarea{width:100%;min-height:260px;resize:vertical;border:1px solid #92969b;border-radius:9px;padding:13px;font:15px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;background:#fff;color:#171717}
+textarea:focus,button:focus-visible{outline:3px solid #7aa7d9;outline-offset:2px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+button{border:1px solid var(--blue);border-radius:8px;padding:10px 15px;font:inherit;font-weight:650;cursor:pointer;background:var(--blue);color:white}button.secondary{background:white;color:var(--blue)}
+.result{margin-top:16px;padding:15px;border-radius:9px;border:1px solid var(--line);background:white}.result.high,.result.medium{border-color:#d28a50;background:var(--warnbg)}.result.none{border-color:#75a487;background:var(--okbg)}
+.pill{display:inline-block;border:1px solid currentColor;border-radius:99px;padding:2px 9px;font-size:.82rem;font-weight:700;margin-bottom:7px}
+ul{padding-left:1.25rem;margin:.45rem 0}.muted{color:var(--muted);font-size:.92rem}.privacy{font-weight:650}.foot{font-size:.85rem;color:var(--muted);margin-top:18px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div class="eyebrow">XIL-AC · herramienta local</div>
+  <h1>Revisión de privacidad antes de enviar</h1>
+  <p>Esta página busca señales de posibles datos sensibles en un texto, directamente en este navegador.</p>
+</header>
+<section class="notice" role="note" aria-label="Advertencia de privacidad">
+  <strong>Importante: el resultado no certifica que el texto sea seguro.</strong>
+  Si contiene información de consultantes, no lo envíes a la API remota de XIL-AC. Esta herramienta solo ayuda a detectar algunas señales explícitas.
+</section>
+<section class="panel">
+  <h2>1. Revisá el texto localmente</h2>
+  <p class="muted">Pegá el texto en el campo. La herramienta no tiene función de envío, no consulta servicios externos y no guarda el contenido.</p>
+  <label for="source" class="privacy">Texto para revisar</label>
+  <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Pegá aquí el texto que querés revisar…"></textarea>
+  <div class="actions">
+    <button id="scan" type="button">Revisar texto</button>
+    <button id="clear" type="button" class="secondary">Borrar texto y resultado</button>
+  </div>
+  <div id="result" class="result" role="status" aria-live="polite" hidden></div>
+</section>
+<section class="panel">
+  <h2>2. Cómo interpretar el resultado</h2>
+  <ul>
+    <li><strong>Señales detectadas:</strong> no continúes con el envío. Revisá el texto y mantené cerrada la API remota para sesiones.</li>
+    <li><strong>No se detectaron señales:</strong> eso no significa que el texto esté anonimizado ni que sea seguro. Puede contener identidades indirectas o detalles reconocibles.</li>
+    <li><strong>Antes de compartir:</strong> eliminá nombres, contactos, documentos, direcciones, fechas precisas y detalles únicos que permitan reconocer a alguien.</li>
+  </ul>
+</section>
+<p class="foot">La inspección ocurre en el navegador de este dispositivo. El contenido no se escribe en almacenamiento web ni se transmite por esta página. Esto no protege frente a dispositivos comprometidos, extensiones del navegador, sincronización del portapapeles u otros programas externos. Detector heurístico: puede dar falsos positivos y falsos negativos.</p>
+</main>
+<script>
+"use strict";
+const rules = [
+  ["correo electrónico", /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i, "identificador directo"],
+  ["teléfono con formato", /(?<!\w)(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]\d{3,4}[\s.-]?\d{3,4}(?!\w)/i, "identificador directo"],
+  ["documento etiquetado", /\b(?:DNI|CUIL|CUIT|documento|pasaporte)\s*(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b/i, "identificador directo"],
+  ["nombre etiquetado", /\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*[:=]\s*[^\n,;]{2,80}/i, "identificador directo"],
+  ["domicilio etiquetado", /\b(?:domicilio|direcci[oó]n|vive en|reside en)\s*[:=]?\s*[^\n,;]{5,100}/i, "ubicación personal"],
+  ["fecha de nacimiento", /\b(?:fecha de nacimiento|naci[oó] el|nacimiento)\s*[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}/i, "dato personal"],
+  ["información de salud", /\b(?:diagn[oó]stico|medicaci[oó]n|medicamento|psiquiatra|psic[oó]logo|historia cl[ií]nica|internaci[oó]n|tratamiento psicol[oó]gico|salud mental)\b/i, "información de salud"],
+  ["violencia o abuso", /\b(?:abuso sexual|violencia sexual|violencia dom[eé]stica|maltrato infantil|agresi[oó]n sexual|trata de personas)\b/i, "información de alta sensibilidad"],
+  ["riesgo autolesivo", /\b(?:suicidio|suicida|autolesi[oó]n|hacerme da[nñ]o|quitarme la vida)\b/i, "información de alta sensibilidad"],
+  ["sexualidad o intimidad", /\b(?:orientaci[oó]n sexual|vida sexual|relaci[oó]n sexual|aborto|embarazo no deseado)\b/i, "información íntima"],
+  ["adicciones", /\b(?:adicci[oó]n|consumo problem[aá]tico|dependencia de sustancias|rehabilitaci[oó]n)\b/i, "información de salud"]
+];
+const source = document.getElementById("source");
+const result = document.getElementById("result");
+document.getElementById("scan").addEventListener("click", () => {
+  const text = source.value;
+  result.hidden = false;
+  result.replaceChildren();
+  if (!text.trim()) {
+    result.className = "result medium";
+    const title = document.createElement("strong");
+    title.textContent = "No se puede evaluar un texto vacío.";
+    const detail = document.createElement("p");
+    detail.textContent = "Pegá el contenido que querés revisar. No ingreses información que no sea necesaria.";
+    result.append(title, detail);
+    return;
+  }
+  const findings = rules.filter(rule => rule[1].test(text));
+  const high = findings.some(f => f[2] === "información de alta sensibilidad");
+  result.className = "result " + (findings.length ? (high ? "high" : "medium") : "none");
+  const pill = document.createElement("span");
+  pill.className = "pill";
+  pill.textContent = findings.length ? (high ? "RIESGO ELEVADO" : "REVISIÓN NECESARIA") : "SIN SEÑALES EXPLÍCITAS";
+  const heading = document.createElement("h2");
+  heading.textContent = findings.length ? "Se detectaron posibles datos sensibles" : "No se detectaron señales en las reglas disponibles";
+  const detail = document.createElement("p");
+  detail.textContent = findings.length
+    ? "No envíes este contenido a la API remota. El resultado muestra tipos de señales, no los fragmentos coincidentes."
+    : "Esto no demuestra que el texto sea anónimo ni seguro. Revisá también nombres implícitos, lugares, fechas, relaciones y detalles únicos.";
+  result.append(pill, heading, detail);
+  if (findings.length) {
+    const list = document.createElement("ul");
+    [...new Set(findings.map(f => f[0]))].forEach(label => {
+      const item = document.createElement("li");
+      item.textContent = label;
+      list.append(item);
+    });
+    result.append(list);
+  }
+});
+document.getElementById("clear").addEventListener("click", () => {
+  source.value = "";
+  result.replaceChildren();
+  result.hidden = true;
+  source.focus();
+});
+</script>
+</body>
+</html>
