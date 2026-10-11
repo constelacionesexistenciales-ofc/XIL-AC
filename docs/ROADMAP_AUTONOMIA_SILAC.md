@@ -160,3 +160,30 @@ Todo informe futuro debe distinguir claramente:
 6. **Aprobado**: persona responsable acepta el alcance y riesgo documentados.
 
 Nunca usar “completado”, “autónomo” o “producción” como sinónimos entre estos estados.
+
+
+## 7. Auditoría de solapamientos entre PR y orden de integración
+
+La comparación de archivos modificados revela rutas compartidas. No conviene fusionar estas PR en paralelo ni cambiar sus bases sin revisar los diffs.
+
+| PR | Alcance principal | Archivos compartidos / riesgo |
+|---|---|---|
+| #11 | Puerta local de privacidad para escritorio Windows | Comparte `README.md` y `docs/PRODUCTION_GATE.md` con otros cambios. Requiere revisión específica de almacenamiento local, bloqueo, recuperación y pruebas Windows. |
+| #12 | Auditoría de producción y compuerta de sesiones | Comparte `README.md`, `core/api.py`, `core/config.py`, `docs/PRODUCTION_GATE.md` y `tests/test_api.py` con cambios posteriores. |
+| #13 | Adaptador Brave y experiencia universal de investigación | Cambia `core/api.py`, `README.md`, `docs/PRODUCTION_GATE.md`, `docs/RESEARCH_ENGINE_PLAN.md`, `docs/SECURITY.md` y `tests/test_api.py`; es la base funcional de #14 y #15. |
+| #14 | Evaluación tecnológica y pruebas de navegador | Se apoya en #13; añade evaluación documental y pruebas Playwright. |
+| #15 | Límite compartido PostgreSQL y preparación de producción | Se apoya en #14; vuelve a cambiar `core/api.py`, workflows, `README.md`, `docs/PRODUCTION_GATE.md` y `tests/test_api.py`. |
+| #16 | Hoja de ruta maestra | Solo añade este documento; no cambia el comportamiento de la API. |
+
+### Secuencia recomendada
+
+1. Revisar #12 y #11 como cambios de privacidad independientes y resolver primero sus pruebas/alcance; no asumir que la compuerta local Windows sustituye los controles del servidor.
+2. Revisar y validar #13 como base de investigación, incluida autorización, auditoría previa a proveedor y comportamiento sin secreto.
+3. Revisar #14 encima de #13; conservar las pruebas de navegador y validar su cobertura real.
+4. Revisar #15 encima de #14; verificar integración PostgreSQL, concurrencia, ventanas, 429/Retry-After, fallo cerrado y limpieza.
+5. Antes de cada integración, actualizar la rama con la base prevista, resolver conflictos de archivos compartidos y volver a ejecutar CI en el SHA resultante.
+6. No integrar #11–#15 por lote. Cada PR debe tener propósito claro, pruebas verdes, revisión de diferencias y criterio de aceptación satisfecho.
+
+### Estado de la validación de esta hoja de ruta
+
+La PR #16 se encuentra abierta como borrador. Sus ejecuciones iniciales de CI y CodeQL están en curso; el resultado final debe comprobarse por SHA antes de marcar el documento como validado.
