@@ -12,7 +12,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16
@@ -39,6 +39,13 @@ jobs:
         run: POSTGRES_DB=xilac POSTGRES_USER=xilac POSTGRES_PASSWORD=local-test-password XILAC_API_TOKEN=local-test-token docker compose config --quiet
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[test]"
+      - name: Generate Python environment SBOM
+        run: |
+          pip install "cyclonedx-bom>=4,<8" "pip-audit>=2.7,<3"
+          cyclonedx-py environment --output-format JSON --output-file sbom-python-environment.json
+      - name: Audit installed Python dependencies
+        run: |
+          pip-audit --format json --output pip-audit-report.json || echo "DEPENDENCY_AUDIT_FAILED=true" >> "$GITHUB_ENV"
       - name: Static security scan (Bandit)
         run: |
           pip install "bandit>=1.7,<2.0"
@@ -46,3 +53,20 @@ jobs:
       - run: ruff check core tests scripts
       - name: Run unit and integration tests (browser suite runs in its dedicated workflow)
         run: pytest --ignore=tests/browser
+      - name: Upload SBOM and dependency audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xilac-sbom-and-dependency-audit
+          path: |
+            sbom-python-environment.json
+            pip-audit-report.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Enforce dependency audit gate
+        if: always()
+        run: |
+          if [ "${DEPENDENCY_AUDIT_FAILED:-false}" = "true" ]; then
+            echo "Dependency audit failed or reported known vulnerabilities. Review pip-audit-report.json."
+            exit 1
+          fi
