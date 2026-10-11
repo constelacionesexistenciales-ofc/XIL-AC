@@ -22,6 +22,22 @@
     cfe: { label: "Desarrollo personal y CFE", topics: ["Experiencia", "Perspectivas", "Preguntas", "Aplicación"] }
   };
 
+
+  const localPrivacyPatterns = [
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
+    /\b(?:DNI|CUIL|CUIT|pasaporte)\s*(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b/i,
+    /\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*[:=]\s*[^\n,;]{2,80}/i,
+    /\b(?:mi domicilio|mi dirección|mi direccion|vive en|reside en)\s*[:=]?\s*[^\n,;]{5,100}/i,
+    /\b(?:mi fecha de nacimiento|fecha de nacimiento|nací el|naci el)\s*[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}/i,
+    /\bmi\s+(?:diagnóstico|diagnostico|medicación|medicacion|historia clínica|historia clinica|tratamiento|psiquiatra|psicólogo|psicologo)\b/i,
+    /\b(?:me diagnosticaron|me recetaron|me internaron|padezco|sufro de|estoy en tratamiento por)\b/i,
+    /\b(?:quiero quitarme la vida|quiero hacerme daño|quiero hacerme dano|voy a hacerme daño|voy a hacerme dano|fui víctima de|fui victima de|me abusaron|me agredieron|sufrí abuso|sufri abuso|sufrí violencia|sufri violencia)\b/i
+  ];
+
+  function containsLikelyPersonalSensitiveData(value) {
+    return localPrivacyPatterns.some((pattern) => pattern.test(value));
+  }
+
   function showToast(message) {
     toast.textContent = message;
     toast.classList.add("visible");
@@ -111,6 +127,11 @@
     if (query.length < 3) {
       question.focus();
       showToast("Escribí una pregunta de al menos 3 caracteres.");
+      return;
+    }
+    if (containsLikelyPersonalSensitiveData(query)) {
+      renderError("La pregunta parece incluir datos personales o una situación sensible. Por prevención, no se envió a la API ni al proveedor externo. Reformulala sin datos identificables.");
+      question.focus();
       return;
     }
     if (!token) {
