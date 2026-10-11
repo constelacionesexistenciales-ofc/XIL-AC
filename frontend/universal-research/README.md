@@ -1,29 +1,26 @@
-# Experiencia universal de investigación — prototipo
+# Experiencia universal de investigación — interfaz conectada a búsqueda web
 
-Interfaz estática, adaptable y sin dependencias de compilación para explorar la experiencia visual transversal de investigación de XIL-AC/SILAC.
+Interfaz adaptable para investigaciones generales de XIL-AC/SILAC. Se sirve desde la API en **/research-ui/** y envía consultas a **POST /v1/research**.
 
-## Ejecutar localmente
+## Capacidad disponible
 
-Abrí `index.html` en un navegador moderno. No requiere instalar paquetes ni ejecutar un servidor.
+- Envía una consulta al endpoint de búsqueda protegido.
+- Pide un token de acceso para la sesión actual de la página; no usa localStorage, cookies ni almacenamiento persistente para ese token.
+- Muestra títulos, dominios, descripciones y enlaces HTTPS devueltos por el proveedor.
+- Expone errores de autenticación, permisos, privacidad y configuración sin fabricar resultados.
+- Muestra un aviso de que la consulta se envía al proveedor externo configurado.
+- El esquema visual por disciplina es orientativo y no constituye un análisis automático de evidencia.
 
-## Contenido
+## Ejecutar
 
-- `index.html`: estructura semántica de la interfaz en español.
-- `styles.css`: sistema visual adaptable, diseño móvil y soporte para movimiento reducido.
-- `app.js`: interacciones de demostración y cambio de esquema conceptual según la disciplina.
+Abrí **/research-ui/** desde la misma instancia de XIL-AC que sirve la API. No abras **index.html** directamente como archivo local, ya que las solicitudes relativas a la API no funcionarán.
 
-## Estado y límites
+## Configuración del servidor
 
-**Esto es un prototipo visual interactivo, no un motor de investigación conectado.** No consulta fuentes, no usa modelos de lenguaje, no guarda investigaciones y no debe presentar el contenido de ejemplo como hallazgos verificados. La interfaz muestra explícitamente ese límite.
+Configurar **BRAVE_SEARCH_API_KEY** como secreto de entorno y **XILAC_API_TOKEN** solo para desarrollo local. En staging/producción, usar OIDC/JWT conforme a la configuración del backend. El secreto del proveedor nunca debe estar disponible en el navegador.
 
-La integración real necesita conectarse al contrato de resultados de investigación de XIL-AC, usar metadatos de fuentes verificadas y conservar las etiquetas de evidencia y la trazabilidad del motor. No habilita ni modifica el procesamiento de sesiones CFE.
+## Límites
 
-## Validación manual sugerida
+Esta integración recupera resultados web. **No** descarga ni evalúa automáticamente los artículos, no contrasta fuentes de forma semántica y no genera una síntesis mediante un modelo. El proveedor debe estar configurado; si falta la clave, el sistema informa del error en vez de simular una investigación.
 
-1. Abrir la página y comprobar la carga sin errores.
-2. Cambiar de disciplina y enviar una pregunta: cambia el esquema ilustrativo y el aviso indica que no se ejecutó una investigación.
-3. Expandir y contraer cada ruta de profundización.
-4. Probar «Nueva investigación» y «Copiar pregunta».
-5. Verificar la lectura en móvil a 320, 375 y 650 px.
-6. Navegar con teclado y comprobar el foco visible.
-7. Confirmar que no se muestran citas ficticias ni resultados simulados como hechos reales.
+No introducir sesiones, datos personales, información clínica de consultantes ni consultas confidenciales. El control de privacidad del servidor es heurístico y no garantiza detectar todo contenido sensible.
