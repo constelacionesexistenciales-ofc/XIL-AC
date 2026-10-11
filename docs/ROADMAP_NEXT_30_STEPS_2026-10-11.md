@@ -2,7 +2,7 @@
 
 **Tipo de documento:** hoja de ruta, no evidencia de implementación.
 **Regla de avance:** cada cambio debe superar CI y revisión antes de integrarse; si falla, se corrige antes de continuar.
-**Estado actualizado 2026-10-11:** PR #19, #20, #22, #23 y #24 están integradas. Las CI de rama de #19–#24 fueron aprobadas; las CI posteriores de main están confirmadas para #19–#23, y la de #24 estaba en curso en la última consulta. El procesamiento de sesiones CFE permanece bloqueado.
+**Estado actualizado 2026-10-11:** PR #19, #20, #22, #23 y #24 están integradas. Las PR originales #11 y #13 se cerraron como sustituidas por #19 y #20, respectivamente. Las CI de rama de #19–#24 fueron aprobadas; las CI posteriores de main están confirmadas para #19–#23, y la de #24 estaba en curso en la última consulta. El procesamiento de sesiones CFE permanece bloqueado.
 
 ## A. Cerrar las integraciones (16–20)
 
