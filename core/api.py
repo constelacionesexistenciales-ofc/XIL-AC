@@ -2,18 +2,21 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field, field_validator
 
 from core.audit import record_audit_event
 from core.auth import Principal, require_roles
 from core.config import Settings
 from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
-from core.privacy_detector import detect_sensitive_content
+from core.privacy_detector import detect_research_sensitive_content, detect_sensitive_content
+from core.research import ResearchProviderNotConfigured, ResearchProviderUnavailable, ResearchRateLimited, search_web
 from core.trace import new_trace
 
 settings = Settings()
@@ -120,3 +123,4 @@ def process(
             "message": "El motor de procesamiento todavía no está conectado.",
         },
     )
+
