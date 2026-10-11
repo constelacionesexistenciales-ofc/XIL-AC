@@ -7,6 +7,7 @@ HTML = (UI / "index.html").read_text(encoding="utf-8")
 CSS = (UI / "styles.css").read_text(encoding="utf-8")
 JS = (UI / "app.js").read_text(encoding="utf-8")
 DOC = (ROOT / "docs" / "UNIVERSAL_RESEARCH_EXPERIENCE.md").read_text(encoding="utf-8")
+PLAN = (ROOT / "docs" / "RESEARCH_ENGINE_PLAN.md").read_text(encoding="utf-8")
 
 
 def test_html_has_spanish_mobile_shell_and_local_assets():
@@ -32,7 +33,7 @@ def test_live_search_discloses_limits_and_does_not_fake_synthesis():
     assert "XMLHttpRequest" not in JS
     assert "WebSocket" not in JS
     assert "La síntesis automática aún no está conectada" in JS
-    assert "BRAVE_SEARCH_API_KEY" in DOC
+    assert "BRAVE_SEARCH_API_KEY" in PLAN
     assert "not a static mockup presented as a working product" in DOC
 
 
