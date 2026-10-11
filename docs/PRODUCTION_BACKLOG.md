@@ -8,7 +8,7 @@
 |---|---|---|
 | En curso | CI, Ruff, pruebas y CodeQL de las ramas activas | Ejecución verde vinculada al commit exacto; revisar alertas, no solo el estado general |
 | Pendiente | Identidad OIDC real | Pruebas contra proveedor configurado: token válido, inválido, expirado, audiencia/emisor incorrectos, roles ausentes y rol no autorizado |
-| Pendiente | Limitación de solicitudes compartida entre instancias | Pruebas concurrentes contra PostgreSQL; 429 y Retry-After correctos; recuperación después del cambio de ventana |
+| En validación | Límite inicial compartido por PostgreSQL implementado en rama de desarrollo | CI, prueba de integración contra PostgreSQL y prueba concurrente deben pasar; verificar 429/Retry-After y cambio de ventana |
 | Pendiente | Límites de gasto y cuotas del proveedor | Cuota/alerta del proveedor y límite de aplicación verificados; comportamiento cerrado ante exceso |
 | Pendiente | Protección web para el despliegue elegido | CORS restrictivo, CSRF si hay cookies, CSP, cabeceras de seguridad y TLS verificados desde el cliente real |
 | Pendiente | Secretos en entorno real | Gestor de secretos configurado, acceso mínimo, rotación documentada; nunca secretos en Git, frontend, artefactos ni logs |
@@ -60,5 +60,5 @@ La puerta no se considera aprobada hasta que:
 ## Registro de implementación
 
 - [x] Documentar el inventario priorizado y la evidencia de cierre.
-- [ ] Implementar limitación compartida por PostgreSQL y probarla en CI.
+- [x] Implementación inicial de límite compartido por PostgreSQL; pruebas unitarias añadidas.\n- [ ] Confirmar CI, integración real y concurrencia; implementar límites de gasto/cuota del proveedor.
 - [ ] Resolver el resto de bloqueos P0 uno por uno; no declarar producción por anticipado.
