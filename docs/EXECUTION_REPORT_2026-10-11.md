@@ -54,3 +54,32 @@ Nunca compartir secretos por chat ni guardarlos en Git.
 ## Regla de publicación
 
 No integrar ni desplegar automáticamente por el solo hecho de que se hayan creado commits. La rama debe tener CI verde, revisión de cambios y evidencia de pruebas aplicables. La decisión de publicación y la aprobación de producción siguen siendo humanas.
+
+
+## Addendum — avance de fases 3–5 (2026-10-11)
+
+### Fase 3 — endurecimiento y QA
+- Se endureció la validación de URL tanto en los resultados del proveedor como en el registro de evidencia: HTTPS obligatorio, sin credenciales incrustadas, puertos no estándar, hosts locales ni direcciones IP no públicas.
+- Se añadieron pruebas adversariales para las URL y pruebas del preflight local de privacidad.
+- Se incorporó el flujo `.github/workflows/dependency-audit.yml` con `pip-audit` en PR, push, ejecución manual y calendario semanal.
+- CI #245 pasó en el commit `3ab5b2786afc79e608ef2b946f23ac744c11c867`: **112 pruebas aprobadas**, 1 advertencia de deprecación; Compose, Bandit y Ruff pasaron.
+- Auditoría de dependencias #12: **aprobada**.
+- CodeQL #187: **omitido** por la condición del flujo para repositorios privados. No se interpreta como análisis aprobado.
+
+### Fase 4 — evaluación de procedencia (parcial)
+- Se agregó `core/research_assessment.py` y el campo `source_assessment` en la respuesta de investigación.
+- La evaluación informa recuento de fuentes, dominios únicos, diversidad, duplicados y metadatos faltantes.
+- No calcula una puntuación ficticia de credibilidad y declara explícitamente que el contenido no fue verificado.
+- El registro de evidencia ahora exige URL HTTPS públicas.
+- Pendiente: recuperación segura del contenido de páginas, extracción limitada y con controles, evaluación del contenido, contraste semántico entre fuentes y síntesis con citas verificables. No declarar el motor autónomo completo.
+
+### Fase 5 — producción (NO-GO)
+- La auditoría de dependencias y las pruebas de CI no equivalen a una validación de producción.
+- Continúan pendientes: E2E real con clave autorizada de Brave; disponibilidad de CodeQL; OIDC y secretos gestionados en entorno objetivo; límites de gasto; observabilidad; política y pruebas de retención/borrado; pruebas de carga, recuperación, restauración y despliegue real; revisión y aprobación humana.
+- `CFE_SESSION_PROCESSING_ENABLED=false` sigue siendo el valor predeterminado. No habilitar sesiones reales.
+
+### Enlaces de ejecución
+- CI #245: https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38156565941
+- Auditoría de dependencias #12: https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38156565918
+- CodeQL omitido #187: https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38156565889
+- PR de trabajo: https://github.com/constelacionesexistenciales-ofc/XIL-AC/pull/28
