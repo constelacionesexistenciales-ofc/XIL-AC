@@ -14,11 +14,15 @@ class _HTTPSProviderRedirectHandler(HTTPRedirectHandler):
     """Allow redirects only to the fixed HTTPS provider host."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        parsed = urlparse(newurl)
+        try:
+            parsed = urlparse(newurl)
+            port = parsed.port
+        except ValueError:
+            return None
         if (
             parsed.scheme != "https"
             or parsed.hostname != "api.search.brave.com"
-            or parsed.port not in (None, 443)
+            or port not in (None, 443)
         ):
             return None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -48,8 +52,11 @@ class _SameOriginRedirectHandler(HTTPRedirectHandler):
         self._origin = origin
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        parsed = urlparse(newurl)
-        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        try:
+            parsed = urlparse(newurl)
+            port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        except ValueError:
+            return None
         if (parsed.scheme, parsed.hostname or "", port) != self._origin:
             return None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -59,6 +66,10 @@ def _search_searxng(query: str, count: int) -> dict:
     """Query an operator-controlled SearXNG instance; no API key is needed."""
     base_url = os.getenv("SEARXNG_BASE_URL", "http://searxng:8080").strip().rstrip("/")
     parsed_base = urlparse(base_url)
+    try:
+        configured_port = parsed_base.port
+    except ValueError:
+        raise ResearchProviderNotConfigured from None
     if (
         parsed_base.scheme not in {"http", "https"}
         or not parsed_base.hostname
@@ -73,7 +84,7 @@ def _search_searxng(query: str, count: int) -> dict:
     ):
         raise ResearchProviderNotConfigured
 
-    port = parsed_base.port or (443 if parsed_base.scheme == "https" else 80)
+    port = configured_port or (443 if parsed_base.scheme == "https" else 80)
     origin = (parsed_base.scheme, parsed_base.hostname, port)
     params = urlencode({"q": query, "format": "json", "language": "auto"})
     request = Request(
@@ -115,13 +126,15 @@ def _search_searxng(query: str, count: int) -> dict:
             continue
         seen.add(url)
         published = item.get("publishedDate")
-        results.append({
-            "title": title[:300],
-            "url": url[:2048],
-            "domain": parsed.hostname[:255],
-            "description": description[:1000] if isinstance(description, str) else "",
-            "published_at": published[:100] if isinstance(published, str) else None,
-        })
+        results.append(
+            {
+                "title": title[:300],
+                "url": url[:2048],
+                "domain": parsed.hostname[:255],
+                "description": description[:1000] if isinstance(description, str) else "",
+                "published_at": published[:100] if isinstance(published, str) else None,
+            }
+        )
         if len(results) >= max(1, min(count, 10)):
             break
 
