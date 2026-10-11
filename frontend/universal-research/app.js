@@ -134,7 +134,7 @@
           "Content-Type": "application/json",
           "Authorization": "Bearer " + token
         },
-        body: JSON.stringify({ query, count: 5 })
+        body: JSON.stringify({ query, count: 5, domain: domain.value })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
