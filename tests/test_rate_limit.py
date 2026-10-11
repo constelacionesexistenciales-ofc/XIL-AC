@@ -17,10 +17,12 @@ class FakeConnection:
     def __init__(self, counts):
         self.counts = counts
         self.parameters = None
+        self.history = []
 
     def execute(self, query, parameters):
         assert "ON CONFLICT" in query
         self.parameters = parameters
+        self.history.append(parameters)
         return FakeResult(self.counts.pop(0))
 
 
@@ -80,7 +82,8 @@ def test_rate_limit_uses_new_bucket_after_window_rollover(monkeypatch):
     rate_limit.enforce_rate_limit("user-1", "research", limit=1, window_seconds=60, now=119)
     rate_limit.enforce_rate_limit("user-1", "research", limit=1, window_seconds=60, now=120)
     # Each request is assigned to its own fixed-window bucket at the boundary.
-    assert fake.parameters[2] == 120
+    assert fake.history[0][2] == 60
+    assert fake.history[1][2] == 120
 
 
 def test_rate_limit_isolates_subjects_and_scopes(monkeypatch):
