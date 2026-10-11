@@ -17,14 +17,16 @@
 
 ## Bloqueos pendientes antes de exponer a usuarios
 
-- [ ] Ejecutar y revisar CI en el commit candidato, incluyendo PostgreSQL, Ruff, Bandit y pruebas de navegador.
+- [ ] Ejecutar y revisar CI en el commit candidato, incluyendo PostgreSQL, Ruff, Bandit, pruebas de navegador y auditoría de dependencias (`pip-audit`).
 - [ ] Ejecutar prueba de extremo a extremo con clave válida del proveedor configurada como secreto; no usar claves de prueba para afirmar funcionamiento real.
 - [ ] Resolver CodeQL: el último intento consultado falló al publicar resultados porque el análisis de código no está habilitado en este repositorio. Confirmar disponibilidad/plan y configuración; no marcar la seguridad como aprobada mientras siga sin resultado.
 - [ ] Integrar la inspección local previa al envío en el cliente. La utilidad CLI existente no bloquea automáticamente a todos los clientes.
 - [ ] Evaluar falsos positivos y falsos negativos con un corpus sintético representativo.
 - [ ] Configurar y verificar OIDC real y el principio de mínimo privilegio.
 - [ ] Elegir y configurar un gestor de secretos administrado en el entorno de ejecución.
-- [ ] Completar evaluación de contenido de fuentes, contraste semántico y síntesis con citas verificables antes de llamar al sistema motor autónomo.
+- [x] Validar la procedencia estructural de las fuentes con URL HTTPS pública, sin credenciales, puertos no estándar ni hosts locales/privados.
+- [x] Exponer evaluación de metadatos y diversidad de dominios sin puntuación inventada de fiabilidad.
+- [ ] Completar recuperación segura de contenido, contraste semántico de afirmaciones y síntesis con citas verificables antes de llamar al sistema motor autónomo.
 - [ ] Establecer límites de gasto, presupuesto y alertas del proveedor.
 - [ ] Verificar límite compartido PostgreSQL, concurrencia, respuestas 429/503 y ejecución programada de limpieza.
 - [ ] Implementar observabilidad, política de retención y borrado.
