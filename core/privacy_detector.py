@@ -131,53 +131,54 @@ def detect_sensitive_content(text: str) -> PrivacyFinding:
     )
 
 
+
 _RESEARCH_DIRECT_RULES: tuple[tuple[str, str], ...] = (
-    ("identificador_directo", r"\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b"),
+    ("identificador_directo", r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"),
     (
         "identificador_directo",
-        r"(?<!\\w)(?:\\+\\d{1,3}[\\s.-]?)?\\(?\\d{2,4}\\)?[\\s.-]\\d{3,4}[\\s.-]?\\d{3,4}(?!\\w)",
+        r"(?<!\w)(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]\d{3,4}[\s.-]?\d{3,4}(?!\w)",
     ),
     (
         "identificador_directo",
-        r"\\b(?:DNI|CUIL|CUIT|documento|pasaporte)\\s*(?:n(?:ro|úm(?:ero)?)?\\.?\\s*)?[:#-]?\\s*[A-Z0-9.-]{6,}\\b",
+        r"\b(?:DNI|CUIL|CUIT|documento|pasaporte)\s*(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b",
     ),
     (
         "identificador_directo",
-        r"\\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\\s*[:=]\\s*[^\\n,;]{2,80}",
+        r"\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*[:=]\s*[^\n,;]{2,80}",
     ),
     (
         "ubicacion_personal",
-        r"\\b(?:mi domicilio|mi dirección|mi direccion|vive en|reside en)\\s*[:=]?\\s*[^\\n,;]{5,100}",
+        r"\b(?:mi domicilio|mi dirección|mi direccion|vive en|reside en)\s*[:=]?\s*[^\n,;]{5,100}",
     ),
     (
         "dato_personal",
-        r"\\b(?:mi fecha de nacimiento|fecha de nacimiento|naci[oó] el)\\s*[:=]?\\s*\\d{1,4}[/-]\\d{1,2}[/-]\\d{1,4}",
+        r"\b(?:mi fecha de nacimiento|fecha de nacimiento|naci[oó] el)\s*[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}",
     ),
 )
 
 _RESEARCH_PERSONAL_CONTEXT_RULES: tuple[tuple[str, str], ...] = (
     (
         "informacion_de_salud_personal",
-        r"\\bmi\\s+(?:diagn[oó]stico|medicaci[oó]n|historia cl[ií]nica|tratamiento|psiquiatra|psic[oó]logo)\\b",
+        r"\bmi\s+(?:diagn[oó]stico|medicaci[oó]n|historia cl[ií]nica|tratamiento|psiquiatra|psic[oó]logo)\b",
     ),
     (
         "informacion_de_salud_personal",
-        r"\\b(?:me diagnosticaron|me recetaron|me internaron|padezco|sufro de|estoy en tratamiento por)\\b",
+        r"\b(?:me diagnosticaron|me recetaron|me internaron|padezco|sufro de|estoy en tratamiento por)\b",
     ),
     (
         "informacion_de_alta_sensibilidad",
-        r"\\b(?:quiero quitarme la vida|quiero hacerme da[nñ]o|voy a hacerme da[nñ]o|"
-        r"fui v[ií]ctima de|me abusaron|me agredieron|sufr[ií] abuso|sufr[ií] violencia)\\b",
+        r"\b(?:quiero quitarme la vida|quiero hacerme daño|voy a hacerme daño|"
+        r"fui víctima de|me abusaron|me agredieron|sufrí abuso|sufrí violencia)\b",
     ),
 )
 
 
 def detect_research_sensitive_content(text: str) -> PrivacyFinding:
-    """More specific privacy gate for general research questions.
+    """Specific privacy gate for general research questions.
 
     General discussion of medical, historical, or social topics remains searchable.
     Direct identifiers and explicitly personal sensitive disclosures are blocked.
-    This heuristic is only a secondary safeguard and is not a guarantee.
+    This heuristic is a secondary safeguard, not a guarantee.
     """
     if not isinstance(text, str) or not text.strip():
         return PrivacyFinding(
