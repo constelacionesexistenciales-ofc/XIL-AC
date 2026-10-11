@@ -30,8 +30,8 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql://xilac_test:xilac_test@localhost:5432/xilac_test
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: "3.12"
           cache: pip
@@ -55,7 +55,7 @@ jobs:
         run: pytest --ignore=tests/browser
       - name: Upload SBOM and dependency audit
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: xilac-sbom-and-dependency-audit
           path: |
