@@ -15,7 +15,7 @@ from core.auth import Principal, require_roles
 from core.config import Settings
 from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
-from core.privacy_detector import detect_sensitive_content
+from core.privacy_detector import detect_research_sensitive_content, detect_sensitive_content
 from core.research import (
     ResearchProviderNotConfigured,
     ResearchProviderUnavailable,
@@ -153,7 +153,7 @@ def research(
     principal: Principal = Depends(require_roles("facilitator", "admin")),
 ) -> JSONResponse:
     """Search public web sources for general research; never stores query text."""
-    finding = detect_sensitive_content(request.query)
+    finding = detect_research_sensitive_content(request.query)
     if finding.should_warn:
         return JSONResponse(
             status_code=423,
