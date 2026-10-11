@@ -95,5 +95,11 @@ def test_search_web_caps_requested_result_count(monkeypatch):
 def test_redirect_handler_rejects_non_https_and_other_hosts():
     handler = research._HTTPSProviderRedirectHandler()
     request = research.Request("https://api.search.brave.com/res/v1/web/search")
-    assert handler.redirect_request(request, None, 302, "Found", {}, "http://api.search.brave.com/x") is None
-    assert handler.redirect_request(request, None, 302, "Found", {}, "https://evil.example/x") is None
+    insecure = handler.redirect_request(
+        request, None, 302, "Found", {}, "http://api.search.brave.com/x"
+    )
+    external = handler.redirect_request(
+        request, None, 302, "Found", {}, "https://evil.example/x"
+    )
+    assert insecure is None
+    assert external is None
