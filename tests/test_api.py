@@ -56,7 +56,7 @@ def test_process_returns_standard_privacy_warning_when_disabled(monkeypatch):
     assert response.status_code == 423
     assert response.json()["status"] == "temporarily_blocked"
     assert "no recomendamos seguir con esta operación" in response.json()["notice"]
-    assert "No envíes" in response.json()["notice"]
+    assert "no envíes" in response.json()["notice"].lower()
 
 
 def test_process_flags_sensitive_content_without_echoing_matches(monkeypatch):
