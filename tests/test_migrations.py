@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
 import psycopg
@@ -91,3 +92,32 @@ def test_rate_limit_is_shared_and_persisted_in_postgresql(monkeypatch):
         ).fetchone()
     assert row is not None
     assert row[0] == 3
+
+
+
+def test_rate_limit_enforces_limit_across_concurrent_requests(monkeypatch):
+    from core.rate_limit import RateLimitExceeded, enforce_rate_limit
+
+    dsn = os.getenv("TEST_DATABASE_URL")
+    if not dsn:
+        pytest.skip("TEST_DATABASE_URL no está configurada")
+    monkeypatch.setenv("DATABASE_URL", dsn)
+    subject = f"rate-limit-concurrent-{uuid4()}"
+
+    def attempt(_):
+        try:
+            enforce_rate_limit(
+                subject,
+                "research-concurrency",
+                limit=3,
+                window_seconds=60,
+            )
+            return "allowed"
+        except RateLimitExceeded:
+            return "limited"
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        outcomes = list(pool.map(attempt, range(10)))
+
+    assert outcomes.count("allowed") == 3
+    assert outcomes.count("limited") == 7
