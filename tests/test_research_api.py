@@ -1,0 +1,77 @@
+from fastapi.testclient import TestClient
+
+import core.api as api
+
+client = TestClient(api.app)
+
+
+def _auth(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-research-token")
+    return {"Authorization": "Bearer test-research-token"}
+
+
+def test_research_requires_authentication(monkeypatch):
+    monkeypatch.delenv("XILAC_API_TOKEN", raising=False)
+    response = client.post("/v1/research", json={"query": "climate adaptation"})
+    assert response.status_code == 503
+
+
+def test_research_blocks_sensitive_query_before_provider(monkeypatch):
+    headers = _auth(monkeypatch)
+    called = []
+    monkeypatch.setattr(api, "search_web", lambda *args: called.append(args))
+    response = client.post(
+        "/v1/research",
+        headers=headers,
+        json={"query": "Mi diagnóstico es ansiedad y mi correo es alexis@example.com"},
+    )
+    assert response.status_code == 423
+    assert response.json()["status"] == "privacy_warning"
+    assert "alexis@example.com" not in response.text
+    assert called == []
+
+
+def test_research_blocks_when_audit_fails(monkeypatch):
+    headers = _auth(monkeypatch)
+    def fail_audit(*args):
+        raise RuntimeError("storage unavailable")
+    monkeypatch.setattr(api, "record_audit_event", fail_audit)
+    called = []
+    monkeypatch.setattr(api, "search_web", lambda *args: called.append(args))
+    response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation"})
+    assert response.status_code == 503
+    assert called == []
+
+
+def test_research_provider_not_configured_fails_closed(monkeypatch):
+    headers = _auth(monkeypatch)
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
+    monkeypatch.setattr(
+        api,
+        "search_web",
+        lambda *args: (_ for _ in ()).throw(api.ResearchProviderNotConfigured()),
+    )
+    response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation"})
+    assert response.status_code == 503
+
+
+def test_research_success_returns_trace_and_disclaims_synthesis(monkeypatch):
+    headers = _auth(monkeypatch)
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
+    monkeypatch.setattr(
+        api,
+        "search_web",
+        lambda query, count: {
+            "provider": "brave_search",
+            "query": query,
+            "retrieved_at": "2026-10-11T00:00:00+00:00",
+            "result_count": 1,
+            "results": [{"title": "Source", "url": "https://example.org/source", "domain": "example.org", "description": "Evidence", "published_at": None}],
+        },
+    )
+    response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["execution_id"]
+    assert body["synthesis_status"] == "not_generated"
+    assert body["result_count"] == 1
