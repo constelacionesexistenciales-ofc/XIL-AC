@@ -82,4 +82,7 @@ def test_research_success_returns_trace_and_disclaims_synthesis(monkeypatch):
     body = response.json()
     assert body["execution_id"]
     assert body["synthesis_status"] == "not_generated"
+    assert body["evidence_registry_valid"] is True
+    assert body["research_report"]["evidence"][0]["evidence_id"] == "e1"
+    assert body["research_report"]["claims"][0]["status"] == "abstain"
     assert body["result_count"] == 1
