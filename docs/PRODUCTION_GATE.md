@@ -19,7 +19,7 @@
 - [ ] Configurar y verificar un proveedor OIDC real y limitar roles al mínimo necesario.
 - [ ] Implementar límites de solicitudes compartidos entre instancias y límites de gasto del proveedor.
 - [ ] Añadir protección CSRF/CORS y política de seguridad de contenido según el modelo de despliegue.
-- [ ] Medir falsos positivos y falsos negativos del detector con datos sintéticos representativos.
+- [x] Añadir una comprobación local de patrones obvios de datos personales en la interfaz, antes de enviar la consulta.\n- [ ] Medir falsos positivos y falsos negativos del detector local y del servidor con datos sintéticos representativos.
 - [ ] Conectar evaluación de calidad, recuperación autorizada de fuentes y síntesis con citas.
 - [ ] Implementar observabilidad sin registrar consultas sensibles ni secretos.
 - [ ] Probar copias de seguridad, restauración, aislamiento, seguridad y carga.
