@@ -40,12 +40,112 @@ class ResearchRateLimited(ResearchError):
     pass
 
 
+class _SameOriginRedirectHandler(HTTPRedirectHandler):
+    """Allow redirects only to the configured search service origin."""
+
+    def __init__(self, origin: tuple[str, str, int | None]) -> None:
+        super().__init__()
+        self._origin = origin
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urlparse(newurl)
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        if (parsed.scheme, parsed.hostname or "", port) != self._origin:
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _search_searxng(query: str, count: int) -> dict:
+    """Query an operator-controlled SearXNG instance; no API key is needed."""
+    base_url = os.getenv("SEARXNG_BASE_URL", "http://searxng:8080").strip().rstrip("/")
+    parsed_base = urlparse(base_url)
+    if (
+        parsed_base.scheme not in {"http", "https"}
+        or not parsed_base.hostname
+        or parsed_base.username
+        or parsed_base.password
+        or parsed_base.query
+        or parsed_base.fragment
+        or (
+            parsed_base.scheme == "http"
+            and parsed_base.hostname not in {"searxng", "localhost", "127.0.0.1"}
+        )
+    ):
+        raise ResearchProviderNotConfigured
+
+    port = parsed_base.port or (443 if parsed_base.scheme == "https" else 80)
+    origin = (parsed_base.scheme, parsed_base.hostname, port)
+    params = urlencode({"q": query, "format": "json", "language": "auto"})
+    request = Request(
+        f"{base_url}/search?{params}",
+        headers={"Accept": "application/json", "User-Agent": "XIL-AC-Research/0.5"},
+        method="GET",
+    )
+    try:
+        with build_opener(_SameOriginRedirectHandler(origin)).open(request, timeout=8) as response:
+            raw = response.read(1_000_001)
+            if len(raw) > 1_000_000:
+                raise ResearchProviderUnavailable
+    except HTTPError as exc:
+        if exc.code == 429:
+            raise ResearchRateLimited from None
+        raise ResearchProviderUnavailable from None
+    except (URLError, TimeoutError, OSError, ValueError):
+        raise ResearchProviderUnavailable from None
+
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise ResearchProviderUnavailable from None
+    raw_results = payload.get("results", []) if isinstance(payload, dict) else []
+    if not isinstance(raw_results, list):
+        raise ResearchProviderUnavailable
+
+    seen: set[str] = set()
+    results: list[dict[str, str | None]] = []
+    for item in raw_results:
+        if not isinstance(item, dict):
+            continue
+        title, url = item.get("title"), item.get("url")
+        description = item.get("content", item.get("description", ""))
+        if not isinstance(title, str) or not isinstance(url, str):
+            continue
+        parsed = urlparse(url)
+        if parsed.scheme != "https" or not parsed.hostname or url in seen:
+            continue
+        seen.add(url)
+        published = item.get("publishedDate")
+        results.append({
+            "title": title[:300],
+            "url": url[:2048],
+            "domain": parsed.hostname[:255],
+            "description": description[:1000] if isinstance(description, str) else "",
+            "published_at": published[:100] if isinstance(published, str) else None,
+        })
+        if len(results) >= max(1, min(count, 10)):
+            break
+
+    return {
+        "provider": "self_hosted_searxng",
+        "query": query,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "result_count": len(results),
+        "results": results,
+    }
+
+
 def search_web(query: str, count: int = 5) -> dict:
     """Consulta Brave Search API y devuelve metadatos normalizados.
 
     No registra la consulta ni guarda resultados. El proveedor solo se invoca
     después de autenticar, autorizar y pasar los controles de privacidad.
     """
+    backend = os.getenv("RESEARCH_BACKEND", "brave").strip().lower()
+    if backend == "searxng":
+        return _search_searxng(query, count)
+    if backend != "brave":
+        raise ResearchProviderNotConfigured
+
     api_key = os.getenv("BRAVE_SEARCH_API_KEY", "").strip()
     if not api_key:
         raise ResearchProviderNotConfigured
