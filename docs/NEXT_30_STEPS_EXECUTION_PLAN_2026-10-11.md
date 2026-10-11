@@ -55,6 +55,7 @@
 ## Ejecución inicial registrada
 - Se consultaron las PR #31 y #32 y se confirmó que ambas siguen abiertas y en borrador.
 - PR #31: CI reportada exitosa en la ejecución consultada; no fusionada.
-- PR #32: referencia de Trivy actualizada a `aquasecurity/trivy-action@v0.36.0`, con versión de escáner `v0.74.0`; la nueva ejecución debe terminar antes de darla por válida.
-- CodeQL continúa omitido para el repositorio privado debido a la condición del workflow.
+- PR #32: Trivy actualizado a `aquasecurity/trivy-action@v0.36.0` y escáner `v0.74.0`; se verificaron ejecuciones Push y Pull Request exitosas en el SHA `f3bf98ce0f00485079910d6f724b05f1590bbe13`. Semgrep ejecutó 151 reglas sobre 24 archivos con 0 hallazgos; Trivy terminó sin disparar el umbral de fallo configurado HIGH/CRITICAL. Informes JSON disponibles como artefactos de CI.
+- Luego se fijaron las cuatro acciones principales del flujo SAST por SHA verificado; el nuevo SHA `f37fad78325339d6545e81fbcdcebe7efc94b4d0` tiene ejecuciones nuevas en cola/en curso al cierre de este informe.
+- CodeQL sigue sin producir un análisis útil: el workflow tiene una condición que lo omite para repositorio privado; la ejecución más reciente debe revisarse, y la alternativa SAST no se presenta como equivalente a CodeQL.
 - No se han fusionado PR ni habilitado procesamiento de sesiones reales.
