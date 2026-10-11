@@ -8,7 +8,7 @@
 |---|---|---|
 | En curso | CI, Ruff, pruebas y CodeQL de las ramas activas | Ejecución verde vinculada al commit exacto; revisar alertas, no solo el estado general |
 | Pendiente | Identidad OIDC real | Pruebas contra proveedor configurado: token válido, inválido, expirado, audiencia/emisor incorrectos, roles ausentes y rol no autorizado |
-| En validación | Límite inicial compartido por PostgreSQL implementado en rama de desarrollo | CI, prueba de integración contra PostgreSQL y prueba concurrente deben pasar; verificar 429/Retry-After y cambio de ventana |
+| En validación | Límite inicial compartido por PostgreSQL | CI, prueba de integración contra PostgreSQL y prueba concurrente; verificar 429/Retry-After y cambio de ventana |
 | Pendiente | Límites de gasto y cuotas del proveedor | Cuota/alerta del proveedor y límite de aplicación verificados; comportamiento cerrado ante exceso |
 | Pendiente | Protección web para el despliegue elegido | CORS restrictivo, CSRF si hay cookies, CSP, cabeceras de seguridad y TLS verificados desde el cliente real |
 | Pendiente | Secretos en entorno real | Gestor de secretos configurado, acceso mínimo, rotación documentada; nunca secretos en Git, frontend, artefactos ni logs |
@@ -23,7 +23,10 @@
 - [ ] Evaluar falsos positivos y falsos negativos del detector de privacidad con datos sintéticos; no tratarlo como garantía.
 - [ ] Probar navegador real, interacción y tamaños de pantalla; confirmar el flujo de CI de Chromium.
 - [ ] Registrar estado, proveedor, latencia y conteos sin guardar consultas ni fragmentos sensibles.
-- [ ] Límites por usuario, por IP cuando corresponda y por gasto; protección contra reintentos abusivos.\n- [ ] Política y tarea de limpieza/retención de `rate_limit_buckets`; evitar crecimiento indefinido de la tabla.
+- [ ] Límites por usuario, por IP cuando corresponda y por gasto; protección contra reintentos abusivos.
+- [x] Script de limpieza por lotes para la tabla `rate_limit_buckets`.
+- [ ] Programar la limpieza periódica en el entorno de despliegue y verificar su ejecución/alertas.
+- [ ] Validar la retención efectiva y el rendimiento de la limpieza con una base de datos representativa.
 - [ ] Manejo de caídas, timeouts, límites del proveedor y respuestas malformadas.
 - [ ] Revisar CORS/CSP/CSRF y cookies según la autenticación y el origen final de la interfaz.
 - [ ] Verificar dependencias, imágenes de contenedor, permisos y política de actualización.
@@ -49,9 +52,10 @@ La puerta no se considera aprobada hasta que:
 2. CI, pruebas de seguridad, análisis estático y dependencias estén sin bloqueos abiertos.
 3. La autenticación y autorización hayan sido verificadas contra el proveedor real.
 4. La limitación de uso funcione entre instancias, tenga retención/limpieza definida y falle de forma segura si la base de control no está disponible.
-5. Copias de seguridad y rollback hayan sido probados, no solo configurados.
-6. No se almacenen consultas, transcripciones, claves ni tokens en registros.
-7. La persona responsable otorgue aprobación humana explícita para el alcance exacto del despliegue.
+5. La tarea de limpieza periódica esté programada y monitorizada.
+6. Copias de seguridad y rollback hayan sido probados, no solo configurados.
+7. No se almacenen consultas, transcripciones, claves ni tokens en registros.
+8. La persona responsable otorgue aprobación humana explícita para el alcance exacto del despliegue.
 
 ## Alcance que sigue deshabilitado
 
@@ -60,5 +64,7 @@ La puerta no se considera aprobada hasta que:
 ## Registro de implementación
 
 - [x] Documentar el inventario priorizado y la evidencia de cierre.
-- [x] Implementación inicial de límite compartido por PostgreSQL; pruebas unitarias añadidas.\n- [ ] Confirmar CI, integración real y concurrencia; implementar límites de gasto/cuota del proveedor.
+- [x] Implementación inicial de límite compartido por PostgreSQL; pruebas unitarias añadidas.
+- [x] Añadir script de limpieza por lotes y pruebas unitarias.
+- [ ] Confirmar CI, integración real y concurrencia; implementar límites de gasto/cuota del proveedor.
 - [ ] Resolver el resto de bloqueos P0 uno por uno; no declarar producción por anticipado.
