@@ -1,50 +1,51 @@
-# Informe técnico consolidado XIL-AC — 2026-10-11
+# Informe técnico consolidado XIL-AC — actualización 2026-10-11
 
-## Alcance y criterio
-Este informe distingue entre cambios fusionados, verificaciones observadas y capacidades aún no implementadas. Una ejecución de CI solo valida el SHA indicado; no certifica el producto completo ni producción.
+## Criterio de lectura
 
-## Integraciones y evidencia verificable
+Este informe separa código integrado, CI, validación en entorno y autorización de uso. CI verde valida el commit probado; no demuestra despliegue productivo, calidad de investigación real ni autonomía integral. CodeQL figura omitido en estas ejecuciones por la configuración del repositorio privado; no debe presentarse como aprobado.
 
-### PR #16 — auditoría maestra
-- Estado: fusionada en `main`.
-- Commit: `4fa0ec320b96c06407b96a21914a6e207f00839f`.
-- CI en ese SHA: satisfactorio: https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38112692175
+## Integraciones verificadas
 
-### PR #12 — puerta de preparación para producción
-- Estado: fusionada en `main`.
-- Commit de integración: `577536e8c0dc1c8342f0d0b1b8a1b273635ad07e`.
-- Aporta auditoría de preparación, barrera de arranque que impide activar el procesamiento de sesiones en staging/producción mientras el motor CFE no esté implementado, utilidad local de preinspección y pruebas de regresión.
-- CI posterior a esta integración debe confirmarse por su ejecución específica: https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38113158685
-- CodeQL figura omitido por la configuración para el repositorio privado; no equivale a análisis aprobado.
+| PR | Estado | Alcance integrado | Evidencia |
+|---|---|---|---|
+| #16 | Integrada | Auditoría maestra, corrección de regresión, filtros CI y Bandit | [CI #16](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38112692175) |
+| #12 | Integrada | Puerta de preparación para producción; procesamiento CFE bloqueado | [CI #12](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38113158685) |
+| #19 | Integrada | Prototipo local de privacidad Windows, autenticación local y página de revisión sin transmisión | [CI](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38143792470) · [Empaquetado Windows](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38143792482) · [CI main posterior](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144221200) |
+| #20 | Integrada | Endpoint de búsqueda autenticado, filtro de privacidad, auditoría previa, adaptador Brave, registro de evidencias, abstención explícita e interfaz | [CI de integración](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144825234) · [CI main posterior](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144929140) |
+| #22 | Integrada | Evaluación tecnológica documental y pruebas de navegador Chromium | [CI](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145095662) · [Chromium](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145095578) · [CI main posterior](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145165234) |
+| #23 | Integrada | Límite compartido PostgreSQL, migración, 429/503 fail-closed, limpieza y pruebas de concurrencia | [CI de integración](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145508597) · [CI main posterior](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145583477) |
+| #24 | Integrada | Primer evaluador determinista de permisos, lista permitida, riesgo y Human Gate; no ejecuta acciones | [CI de integración](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145641082) · [CI main posterior en verificación](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145706232) |
 
-## Solicitudes todavía abiertas
-- PR #11 — puerta local de privacidad para Windows. La ejecución histórica de pytest tuvo 27 pruebas aprobadas y una falla por una expectativa textual obsoleta en `tests/test_api.py`; la corrección de esa expectativa se integró en #16. Sin embargo, #11 presenta conflicto con el `main` actualizado y debe rebasarse/resolverse y volver a probarse antes de integrar.
-- PR #13 — interfaz de investigación y búsqueda web protegida. Pruebas principales históricas aprobadas; CodeQL histórico falló/está condicionado por el entorno privado. Presenta conflicto con el `main` actualizado y necesita actualización, revisión y CI nuevo.
-- PR #14 — evaluación tecnológica y pruebas de navegador. Sus pruebas de navegador históricas fueron satisfactorias. Está apilada sobre #13; no es integración independiente hasta estabilizar #13.
-- PR #15 — límites compartidos de solicitudes y backlog de producción. Las pruebas históricas de CI y navegador fueron satisfactorias. Está apilada sobre #14; requiere validar migraciones, comportamiento concurrente, fallo cerrado y CI tras integrar toda la cadena.
+## Resultado de los seis objetivos de trabajo
 
-## Estado de capacidad
+1. **Auditoría maestra:** cerrada en #16.
+2. **Conflictos y dependencias:** resueltos por reconstrucción controlada de #11 → #19 y #13 → #20; #14 → #22 y #15 → #23 quedaron integradas en ese orden. Las PR originales #11 y #13 pueden seguir abiertas como antecedentes; las integraciones vigentes son #19 y #20.
+3. **Integración y pruebas:** #19, #20, #22, #23 y #24 tienen CI de rama exitosa; las CI posteriores de main están confirmadas para #19–#23. La ejecución post-#24 estaba en curso en la última consulta.
+4. **Informe técnico:** este documento actualiza el estado y las evidencias en un único lugar.
+5. **Investigación y autonomía:** se integró búsqueda web inicial con trazabilidad de fuentes y abstención; se añadió una primera puerta de políticas de autonomía. No existe todavía síntesis automática contrastada ni planificador de tareas que ejecute acciones.
+6. **Producción y piloto:** no completados. Falta infraestructura real, secretos, OIDC real, prueba real con proveedor, observabilidad operativa, pruebas de carga/seguridad/recuperación y protocolo de piloto autorizado.
 
-| Área | Estado real | Evidencia / brecha |
+## Capacidades actuales y límites
+
+| Área | Estado | Qué significa realmente |
 |---|---|---|
-| CI base | Parcialmente verificada | #16 aprobada; validar el commit tras #12 y cada integración posterior |
-| Privacidad local | Prototipos separados | CLI y propuesta de escritorio; aún no hay una puerta obligatoria común a todos los clientes |
-| Procesamiento de sesiones CFE | Deshabilitado | Motor real no conectado; no habilitar |
-| Investigación web | Parcial / propuesta en PR | Adaptador inicial de búsqueda no equivale a un motor de investigación autónomo |
-| Investigación trazable | Pendiente | Falta registro de evidencias por afirmación, contraste, contradicciones, incertidumbre y evaluación de calidad |
-| Autonomía de ejecución | Pendiente | Falta orquestación integral con permisos, límites, checkpoints, recuperación y verificación independiente |
-| Seguridad de producción | No aprobada | OIDC real, secretos administrados, observabilidad, pruebas de seguridad/carga y recuperación no verificados integralmente |
-| Despliegue y piloto | No ejecutados/verificados | No existe evidencia de un despliegue productivo aprobado ni de piloto con protocolo de aceptación |
+| Revisión local de privacidad | Prototipo integrado | La app local no envía texto; la detección es heurística y no garantiza anonimización. La ejecución automatizada de Windows no equivale a instalación validada en un equipo real. |
+| Búsqueda web | Integrada en código | Endpoint autenticado; la consulta se transmite al proveedor si se configura la clave. La clave real no se ha confirmado en un entorno autorizado. |
+| Evidencias | Integrado, inicial | Cada resultado se registra como fuente y el informe incluye abstención explícita; no se extraen afirmaciones ni se contrastan fuentes todavía. |
+| Rate limit | Integrado en código y probado en CI | PostgreSQL compartido, límite atómico, 429/Retry-After y 503 si falla el almacenamiento; aún falta observarlo en despliegue real y programar/monitorizar la limpieza. |
+| Puerta de autonomía | Integrada, inicial | Decide entre denegar, esperar aprobación o autorizar una acción catalogada. No ejecuta la acción ni autentica una aprobación humana real. |
+| TRACE | Parcial | Hay `execution_id` para la búsqueda y la decisión de autonomía; falta enlazar toda la cadena de tareas y persistir eventos completos de forma operativa. |
+| Procesamiento de sesiones CFE | Deshabilitado | No habilitar `POST /v1/process`; el motor CFE no está conectado. |
+| Infraestructura productiva | No demostrada | Compose local y CI con PostgreSQL no equivalen a un servicio cloud seguro y desplegado. |
+| Piloto | No ejecutado | No hay evidencia de un piloto supervisado ni de autorización operativa de un entorno real. |
 
-## Bloqueos para cerrar el proceso
-1. Confirmar CI en el commit de `main` posterior a #12.
-2. Resolver conflictos y actualizar #11 y #13 contra `main`; ejecutar CI nuevo en los SHA resultantes.
-3. Integrar #14 y #15 después de #13, con pruebas después de cada integración.
-4. Configurar una clave de búsqueda como secreto fuera del repositorio y ejecutar una prueba de extremo a extremo; no inventar credenciales ni guardarlas en Git.
-5. Construir y evaluar el motor de investigación con corpus de referencia, citas por afirmación, contraste y abstención ante evidencia insuficiente.
-6. Implementar y probar la orquestación de tareas con límites de permisos, gasto, tiempo, checkpoints, registro y verificación independiente.
-7. Completar identidad, secretos, observabilidad, migraciones, pruebas de seguridad/carga, backups y restauración en una preproducción privada.
-8. Ejecutar piloto solo con datos sintéticos inicialmente, criterios de salida, supervisión humana y aprobación expresa.
+## Bloqueos externos o de autorización
 
-## Decisión
-**XIL-AC no está listo para producción ni para procesar sesiones reales de consultantes.** Mantener `POST /v1/process` bloqueado. Este informe no declara completados el motor de investigación, la autonomía total ni el piloto; establece la situación técnica y las evidencias necesarias para continuar.
+- Configurar `BRAVE_SEARCH_API_KEY` como secreto fuera de Git y ejecutar una búsqueda de extremo a extremo con consulta pública no sensible.
+- Elegir/configurar proveedor OIDC real y gestor de secretos.
+- Disponer de infraestructura privada para preproducción, observabilidad, backups y restauración.
+- Definir responsable, límites y criterios de aceptación del piloto. El uso de datos reales de consultantes requiere autorización separada y evaluación de privacidad específica.
+
+## Decisión actual
+
+**XIL-AC no está aprobado para producción ni para procesar sesiones reales de consultantes.** El motor de investigación es una primera versión de recuperación y registro de fuentes, no un sistema autónomo de investigación completo. La puerta de autonomía es un control de política, no un ejecutor. Mantener bloqueado el procesamiento CFE hasta superar las puertas de calidad, privacidad, seguridad y autorización.
