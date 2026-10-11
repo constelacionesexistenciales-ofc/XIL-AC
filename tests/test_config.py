@@ -33,6 +33,19 @@ def test_production_does_not_allow_disabling_risk_gate(monkeypatch):
         settings.validate()
 
 
+def test_production_cannot_enable_unimplemented_session_engine(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@localhost/test")
+    settings = Settings(
+        environment="production",
+        oidc_issuer="https://identity.example.test/",
+        oidc_audience="xilac-api",
+        oidc_jwks_url="https://identity.example.test/.well-known/jwks.json",
+        cfe_session_processing_enabled=True,
+    )
+    with pytest.raises(ValueError, match="CFE_SESSION_PROCESSING_ENABLED"):
+        settings.validate()
+
+
 def test_oidc_urls_must_use_https():
     settings = Settings(
         environment="production",
