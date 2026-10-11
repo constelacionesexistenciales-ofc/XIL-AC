@@ -6,8 +6,8 @@
 
 ## Estado ejecutivo
 
-- **Verificado:** CI de PR #31 exitosa en el SHA 7477aef; CI de PR #32 exitosa en el SHA actualizado 1c0729db6e7e044953ea142655ca148ed11f33bf; Semgrep y Trivy finalizaron correctamente y sus informes se publicaron como artefactos con 30 días de retención.
-- **Cambio realizado ahora:** workflow SAST actualizado en PR #32 a commit 1c0729db6e7e044953ea142655ca148ed11f33bf; se fijaron las llamadas restantes a checkout/upload-artifact por SHA y Semgrep a versión exacta 1.180.0. La ejecución SAST 38177719130 confirmó éxito en ambos trabajos y publicó informes nuevos; el CI general asociado seguía en curso al último chequeo.
+- **Verificado:** CI de PR #31 exitosa en el SHA 2827ab4b68892685a7721a702425143dd51a1840; CI de PR #32 exitosa en el SHA actualizado 1c0729db6e7e044953ea142655ca148ed11f33bf; Semgrep y Trivy finalizaron correctamente y sus informes se publicaron como artefactos con 30 días de retención.
+- **Cambio realizado ahora:** workflow SAST actualizado en PR #32 a commit 1c0729db6e7e044953ea142655ca148ed11f33bf; se fijaron las llamadas restantes a checkout/upload-artifact por SHA y Semgrep a versión exacta 1.180.0. La ejecución SAST 38177719130 confirmó éxito en ambos trabajos y publicó informes nuevos; el CI general del SHA 1c0729db6e7e044953ea142655ca148ed11f33bf terminó con éxito (38177719155).
 - **Pendiente crítico:** CodeQL continúa omitido en el repositorio privado; PR #32 continúa en borrador; GitHub volvió a calcularla como mergeable=true, pero no se fusionó y requiere revisión humana.
 - **No ejecutable desde el conector por sí solo:** despliegue real, instalación/descarga de modelos, ejecución real de SearXNG/Ollama, pentest, carga, RBAC/OIDC real, restauración de backups y aprobación de producción.
 - **Seguridad:** PR #31/#32/#27/#29 siguen sin fusionar según la consulta; CFE permanece deshabilitado para sesiones reales.
@@ -23,7 +23,7 @@
 7. **HECHO** — Confirmar que CodeQL termina como skipped, no como análisis aprobado.
 8. **HECHO** — Revisar los pasos del trabajo CI: SBOM, auditoría de dependencias, Bandit, Ruff y pruebas.
 9. **HECHO** — Confirmar estado de PR #27 y #29: CI exitosa en los SHA consultados, PR abiertas.
-10. **HECHO** — Registrar resultados y límites; nueva ejecución SAST revisada. El CI general del SHA 0a7e0cca625c77c6994cd58bc1748a0e56d69413 estaba en curso al último chequeo; volver a verificar antes de integrar.
+10. **HECHO** — Registrar resultados y límites; nueva ejecución SAST revisada. CI del SHA 2827ab4b68892685a7721a702425143dd51a1840 terminó con éxito (38177839845).
 
 ## Fase 2 — cadena de suministro y CI (11–20)
 
@@ -36,7 +36,7 @@
 17. **PENDIENTE** — Generar lockfile con hashes para las dependencias de Python.
 18. **PENDIENTE** — Probar que la instalación desde lockfile funciona en entorno limpio.
 19. **PENDIENTE** — Validar que Semgrep y Trivy fallan deliberadamente ante hallazgos de prueba controlados.
-20. **PENDIENTE** — Revisar artefactos completos y documentar hallazgos, falsos positivos y excepciones con vencimiento.
+20. **PENDIENTE** — Revisar artefactos JSON completos y probar el bloqueo con hallazgos controlados.
 
 ## Fase 3 — privacidad, red y seguridad de entradas (21–30)
 
@@ -77,6 +77,6 @@
 49. **PENDIENTE** — Validar en revisión humana que el flujo CFE no diagnostica, no reemplaza al facilitador y respeta el Modo Espera Fenomenológica.
 50. **BLOQUEADO HASTA EVIDENCIA** — Ejecutar Puerta de Producción, resolver todas las condiciones críticas y obtener aprobación explícita antes de activar sesiones reales.
 
-## Puerta de producción
+## Ejecución adicional del 2026-10-11\n\n- **HECHO EN RAMA DE PR #31; CI PENDIENTE** — Fijar actions/checkout, actions/setup-python y actions/upload-artifact por SHA completo en .github/workflows/ci.yml. Commit: c154dad105f6ec4994fe5a306ae75a06e7303e25.\n- **HECHO EN RAMA DE PR #31** — Crear auditoría de preparación para producción con bloqueos P0/P1/P2 y estrategia por etapas: docs/PRODUCTION_READINESS_AUDIT_2026-10-11.md (commit c0ccea53ec8508331ea453feb3e5342af6951c80).\n- **PENDIENTE** — Confirmar CI del commit c154dad y el commit documental posterior; no dar por validado el pinning hasta que el workflow termine correctamente.\n- **NO EJECUTADO** — Despliegue real, OIDC real, gestor de secretos, prueba de restauración, pentest, carga y ejecución real de SearXNG/Ollama; requieren entorno/credenciales controlados y no pueden demostrarse solo desde GitHub.\n\n## Puerta de producción
 
 La puerta permanece **CERRADA** hasta contar con CI y análisis de seguridad revisados en el SHA exacto, dependencias reproducibles, servicios reales probados, identidad/autorización, protección de datos, restauración, pruebas de carga y fallos, evaluación CFE humana y aprobación explícita. No se considera que los 50 pasos estén completados por el mero hecho de que estén enumerados.
