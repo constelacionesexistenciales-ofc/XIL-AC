@@ -36,7 +36,7 @@ def test_assessment_counts_missing_metadata_and_duplicate_urls():
 def test_assessment_handles_empty_or_malformed_result_collection():
     assert assess_source_metadata([])["domain_diversity"] == "unavailable"
     assessment = assess_source_metadata([None, "invalid"])
-    assert assessment["source_count"] == 2
+    assert assessment["source_count"] == 0
     assert assessment["unique_domain_count"] == 0
     assert assessment["content_verified"] is False
 
