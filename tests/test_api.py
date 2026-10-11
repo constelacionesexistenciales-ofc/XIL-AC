@@ -125,3 +125,95 @@ def test_oidc_missing_configuration_fails_closed(monkeypatch):
         json={"text": "texto privado"},
     )
     assert response.status_code == 503
+
+
+def test_research_requires_authentication(monkeypatch):
+    monkeypatch.delenv("XILAC_API_TOKEN", raising=False)
+    response = client.post("/v1/research", json={"query": "climate adaptation"})
+    assert response.status_code == 503
+
+
+def test_research_blocks_sensitive_queries_before_provider(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
+
+    def unexpected_search(*args, **kwargs):
+        raise AssertionError("provider must not be called for flagged query")
+
+    monkeypatch.setattr(api, "search_web", unexpected_search)
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "diagnóstico de salud mental de una persona"},
+    )
+    assert response.status_code == 423
+    assert response.json()["code"] == "POSSIBLE_SENSITIVE_CONTENT"
+
+
+def test_research_fails_closed_when_audit_storage_fails(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+
+    def fail_audit(*args):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(api, "record_audit_event", fail_audit)
+    monkeypatch.setattr(
+        api,
+        "search_web",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("provider must not run")),
+    )
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "renewable energy trends"},
+    )
+    assert response.status_code == 503
+    assert "auditoría" in response.json()["detail"]
+
+
+def test_research_returns_real_provider_results_without_query_logging(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    audit_events = []
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: audit_events.append(args))
+    monkeypatch.setattr(
+        api,
+        "search_web",
+        lambda query, count: {
+            "provider": "brave_search",
+            "query": query,
+            "retrieved_at": "2026-10-10T12:00:00+00:00",
+            "result_count": 1,
+            "results": [{
+                "title": "Renewable energy outlook",
+                "url": "https://example.org/energy",
+                "domain": "example.org",
+                "description": "A source description",
+                "published_at": None,
+            }],
+        },
+    )
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "renewable energy trends", "count": 3},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "completed"
+    assert body["synthesis_status"] == "not_generated"
+    assert body["results"][0]["url"] == "https://example.org/energy"
+    assert len(audit_events) == 1
+    assert "renewable energy trends" not in repr(audit_events)
+
+
+def test_research_requires_configured_provider(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "renewable energy trends"},
+    )
+    assert response.status_code == 503
+    assert "no está configurada" in response.json()["detail"]
