@@ -18,20 +18,21 @@ def test_html_has_spanish_mobile_shell_and_local_assets():
     assert 'id="sources"' in HTML
 
 
-def test_domain_options_match_demo_content():
+def test_domain_options_match_adaptive_visual_content():
     values = set(re.findall(r'<option value="([^"]+)"', HTML))
     expected = {"science", "history", "technology", "business", "education", "cfe"}
     assert values == expected
     for domain in expected:
         assert f"{domain}:" in JS
-    assert "No se ejecutó una investigación real" in JS
+    assert 'domain: domain.value' in JS
 
 
-def test_demo_never_claims_to_fetch_real_research():
-    assert "fetch(" not in JS
+def test_live_search_discloses_limits_and_does_not_fake_synthesis():
+    assert 'fetch("/v1/research"' in JS
     assert "XMLHttpRequest" not in JS
     assert "WebSocket" not in JS
-    assert "no contiene una investigación ejecutada" in HTML
+    assert "La síntesis automática aún no está conectada" in JS
+    assert "BRAVE_SEARCH_API_KEY" in DOC
     assert "not a static mockup presented as a working product" in DOC
 
 
@@ -41,13 +42,15 @@ def test_responsive_accessibility_and_reduced_motion_contract():
     assert "@media(prefers-reduced-motion:reduce)" in CSS
     assert ":focus-visible" in CSS
     assert 'aria-live="polite"' in HTML
-    assert 'aria-expanded="false"' in HTML
+    assert 'autocomplete="off"' in HTML
     assert not re.search(r"font-size:\s*[^;]+/\s*\d", CSS)
 
 
-def test_interactive_controls_are_real_buttons_and_have_handlers():
+def test_interactive_controls_use_real_handlers_and_safe_source_links():
     for control_id in ("newResearch", "copySummary", "researchForm"):
         assert f'id="{control_id}"' in HTML
-    for selector in ("#newResearch", "#copySummary", "form.addEventListener", ".finding"):
+    for selector in ('#newResearch', '#copySummary', 'form.addEventListener', 'makeSourceCard'):
         assert selector in JS
-    assert "aria-expanded" in JS
+    assert 'rel = "noopener noreferrer"' in JS
+    assert "localPrivacyPatterns" in JS
+    assert "aria-busy" in JS
