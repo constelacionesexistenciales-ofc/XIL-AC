@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import os
 from hashlib import sha256
 from uuid import uuid4
 
@@ -9,7 +10,7 @@ from core.rate_limit import RateLimitExceeded, enforce_rate_limit
 
 
 def test_rate_limit_is_shared_and_persisted_in_postgresql(monkeypatch):
-    dsn = __import__("os").getenv("TEST_DATABASE_URL")
+    dsn = os.getenv("TEST_DATABASE_URL")
     if not dsn:
         pytest.skip("TEST_DATABASE_URL is not configured")
     monkeypatch.setenv("DATABASE_URL", dsn)
