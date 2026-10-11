@@ -140,11 +140,13 @@ _RESEARCH_DIRECT_RULES: tuple[tuple[str, str], ...] = (
     ),
     (
         "identificador_directo",
-        r"\b(?:DNI|CUIL|CUIT|documento|pasaporte)\s*(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b",
+        r"\b(?:DNI|CUIL|CUIT|documento|pasaporte)\s*"
+        r"(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b",
     ),
     (
         "identificador_directo",
-        r"\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*[:=]\s*[^\n,;]{2,80}",
+        r"\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*"
+        r"[:=]\s*[^\n,;]{2,80}",
     ),
     (
         "ubicacion_personal",
@@ -152,18 +154,21 @@ _RESEARCH_DIRECT_RULES: tuple[tuple[str, str], ...] = (
     ),
     (
         "dato_personal",
-        r"\b(?:mi fecha de nacimiento|fecha de nacimiento|naci[oó] el)\s*[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}",
+        r"\b(?:mi fecha de nacimiento|fecha de nacimiento|naci[oó] el)\s*"
+        r"[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}",
     ),
 )
 
 _RESEARCH_PERSONAL_CONTEXT_RULES: tuple[tuple[str, str], ...] = (
     (
         "informacion_de_salud_personal",
-        r"\bmi\s+(?:diagn[oó]stico|medicaci[oó]n|historia cl[ií]nica|tratamiento|psiquiatra|psic[oó]logo)\b",
+        r"\bmi\s+(?:diagn[oó]stico|medicaci[oó]n|historia cl[ií]nica|"
+        r"tratamiento|psiquiatra|psic[oó]logo)\b",
     ),
     (
         "informacion_de_salud_personal",
-        r"\b(?:me diagnosticaron|me recetaron|me internaron|padezco|sufro de|estoy en tratamiento por)\b",
+        r"\b(?:me diagnosticaron|me recetaron|me internaron|padezco|sufro de|"
+        r"estoy en tratamiento por)\b",
     ),
     (
         "informacion_de_alta_sensibilidad",
