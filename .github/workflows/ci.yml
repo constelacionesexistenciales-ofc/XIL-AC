@@ -36,7 +36,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Validate local Compose configuration
-        run: POSTGRES_DB=xilac POSTGRES_USER=xilac POSTGRES_PASSWORD=local-test-password XILAC_API_TOKEN=local-test-token docker compose config --quiet
+        run: |
+          POSTGRES_DB=xilac POSTGRES_USER=xilac POSTGRES_PASSWORD=local-test-password XILAC_API_TOKEN=local-test-token docker compose config --quiet
+          POSTGRES_DB=xilac POSTGRES_USER=xilac POSTGRES_PASSWORD=local-test-password XILAC_API_TOKEN=local-test-token SEARXNG_SECRET=ci-only-random-secret RESEARCH_BACKEND=searxng docker compose -f compose.yaml -f compose.selfhosted-search.yaml config --quiet
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[test]"
       - name: Static security scan (Bandit)
