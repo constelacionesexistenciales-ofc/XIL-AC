@@ -22,6 +22,8 @@ La ruta `POST /v1/research` requiere autenticación y rol autorizado, aplica lí
 
 La recuperación devuelve resultados del proveedor y metadatos de procedencia. **Todavía no descarga y evalúa sistemáticamente el contenido de los artículos, no contrasta semánticamente afirmaciones ni produce una síntesis autónoma verificada.** No se debe presentar como motor de investigación completo.
 
+La respuesta incorpora una evaluación explícita de metadatos (`source_assessment`): cantidad de fuentes, dominios únicos, diversidad de dominios, duplicados y campos faltantes. No asigna una puntuación de fiabilidad ni afirma que el contenido esté verificado. El registro de evidencia exige URL HTTPS públicas y rechaza hosts locales/privados, credenciales embebidas y puertos no estándar.
+
 Los resultados se filtran a enlaces HTTPS públicos de formato permitido. Ese filtro reduce riesgos en los enlaces mostrados, pero no demuestra que una fuente sea fiable ni que su contenido sea verdadero.
 
 ## Privacidad y procesamiento CFE
@@ -48,7 +50,7 @@ Docker Compose es una configuración de desarrollo local, no una receta de despl
 
 ## Seguridad y estado de producción
 
-La revisión de CodeQL del flujo anterior falló al intentar publicar resultados porque GitHub indicó que el análisis de código no estaba habilitado para el repositorio. Esto es un problema de configuración/entitlement del análisis; no prueba que el código esté libre de vulnerabilidades ni que se haya encontrado una vulnerabilidad concreta. CI también ejecuta Bandit como control estático adicional.
+La revisión de CodeQL del flujo anterior falló al intentar publicar resultados porque GitHub indicó que el análisis de código no estaba habilitado para el repositorio. Esto es un problema de configuración/entitlement del análisis; no prueba que el código esté libre de vulnerabilidades ni que se haya encontrado una vulnerabilidad concreta. CI también ejecuta Bandit como control estático adicional. Se agregó un flujo independiente de auditoría de dependencias con `pip-audit`; su resultado debe revisarse en cada ejecución y no reemplaza CodeQL.
 
 Antes de producción todavía hacen falta, como mínimo: prueba de extremo a extremo con credenciales reales gestionadas como secretos; resolver la disponibilidad del análisis de código; verificar OIDC real y gestión de secretos; completar observabilidad, retención/borrado, límites de gasto, pruebas de carga y recuperación; y aprobar formalmente la puerta de producción.
 
