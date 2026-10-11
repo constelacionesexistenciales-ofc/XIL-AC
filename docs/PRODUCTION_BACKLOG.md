@@ -23,7 +23,7 @@
 - [ ] Evaluar falsos positivos y falsos negativos del detector de privacidad con datos sintéticos; no tratarlo como garantía.
 - [ ] Probar navegador real, interacción y tamaños de pantalla; confirmar el flujo de CI de Chromium.
 - [ ] Registrar estado, proveedor, latencia y conteos sin guardar consultas ni fragmentos sensibles.
-- [ ] Límites por usuario, por IP cuando corresponda y por gasto; protección contra reintentos abusivos.
+- [ ] Límites por usuario, por IP cuando corresponda y por gasto; protección contra reintentos abusivos.\n- [ ] Política y tarea de limpieza/retención de `rate_limit_buckets`; evitar crecimiento indefinido de la tabla.
 - [ ] Manejo de caídas, timeouts, límites del proveedor y respuestas malformadas.
 - [ ] Revisar CORS/CSP/CSRF y cookies según la autenticación y el origen final de la interfaz.
 - [ ] Verificar dependencias, imágenes de contenedor, permisos y política de actualización.
@@ -48,7 +48,7 @@ La puerta no se considera aprobada hasta que:
 1. Todos los P0 aplicables tengan evidencia reproducible y revisión.
 2. CI, pruebas de seguridad, análisis estático y dependencias estén sin bloqueos abiertos.
 3. La autenticación y autorización hayan sido verificadas contra el proveedor real.
-4. La limitación de uso funcione entre instancias y falle de forma segura si la base de control no está disponible.
+4. La limitación de uso funcione entre instancias, tenga retención/limpieza definida y falle de forma segura si la base de control no está disponible.
 5. Copias de seguridad y rollback hayan sido probados, no solo configurados.
 6. No se almacenen consultas, transcripciones, claves ni tokens en registros.
 7. La persona responsable otorgue aprobación humana explícita para el alcance exacto del despliegue.
