@@ -19,6 +19,7 @@
 - [ ] Configurar y verificar un proveedor OIDC real y limitar el acceso operativo a la identidad autorizada.
 - [ ] Elegir y configurar un gestor de secretos administrado.
 - [ ] Conectar y probar el motor CFE y los proveedores de modelos con límites de datos documentados.
+- [ ] Validar la ruta de investigación web en una rama candidata: autenticación, detección de datos personales, auditoría previa, fallos del proveedor, límites de solicitudes y pruebas E2E con una clave gestionada como secreto.
 - [ ] Implementar límites de solicitudes, observabilidad, retención y borrado.
 - [ ] Probar copias de seguridad, restauración, permisos, aislamiento, seguridad y carga.
 - [ ] Desplegar en infraestructura real y verificar TLS, base de datos y recuperación.

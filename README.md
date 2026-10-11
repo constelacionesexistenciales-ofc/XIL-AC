@@ -15,7 +15,7 @@ Estado: **base de ingeniería 0.4.1; todavía no es candidata a producción real
 - Docker Compose local con puerto publicado solo en localhost y contenedor no-root.
 
 ## Privacidad y modos de trabajo
-La investigación y el desarrollo metodológico pueden continuar mediante la interfaz actual de ChatGPT. El motor autónomo de búsqueda dentro de XIL-AC aún requiere integración. Durante esta etapa, el trabajo de sesiones se realiza por la interfaz de ChatGPT; no enviar información de consultantes a la API remota.
+La investigación general ya tiene una primera ruta de búsqueda web en la rama de integración: requiere token autorizado y clave externa configurada. Devuelve resultados recuperados, pero todavía no sintetiza ni contrasta afirmaciones; no debe describirse como motor autónomo completo. Durante esta etapa, el trabajo de sesiones se realiza por la interfaz de ChatGPT; no enviar información de consultantes a la API remota.
 
 El detector identifica señales explícitas como correos, teléfonos, documentos etiquetados, nombres etiquetados y referencias a salud, violencia, abuso o autolesión. Es heurístico: puede equivocarse y no garantiza detectar todo contenido sensible.
 
@@ -45,3 +45,8 @@ Docker Compose es solo para desarrollo local, no una receta de despliegue produc
 - [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
 - [Puerta de producción](docs/PRODUCTION_GATE.md)
 - [Seguridad y datos](docs/SECURITY.md)
+
+
+## Prototipo de investigación web
+
+La ruta propuesta `POST /v1/research` exige autenticación y rol autorizado, bloquea consultas con señales de datos personales, registra el evento antes de contactar al proveedor y falla de forma cerrada si la auditoría o la configuración no están disponibles. La interfaz se sirve en `/research-ui/`. Para habilitar búsquedas hay que configurar `BRAVE_SEARCH_API_KEY` como secreto fuera del repositorio. La consulta se transmite al proveedor externo; no usar consultas identificables ni información de consultantes. Esta rama requiere CI y revisión antes de integrarse en `main`.

@@ -4,6 +4,7 @@ WORKDIR /app
 RUN addgroup --system xilac && adduser --system --ingroup xilac xilac
 COPY pyproject.toml README.md ./
 COPY core ./core
+COPY frontend ./frontend
 COPY migrations ./migrations
 COPY scripts ./scripts
 RUN pip install --no-cache-dir .

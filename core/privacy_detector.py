@@ -129,3 +129,83 @@ def detect_sensitive_content(text: str) -> PrivacyFinding:
         categories=tuple(sorted(matched_categories)),
         should_warn=True,
     )
+
+
+_RESEARCH_DIRECT_RULES: tuple[tuple[str, str], ...] = (
+    ("identificador_directo", r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"),
+    (
+        "identificador_directo",
+        r"(?<!\w)(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]\d{3,4}[\s.-]?\d{3,4}(?!\w)",
+    ),
+    (
+        "identificador_directo",
+        r"\b(?:DNI|CUIL|CUIT|documento|pasaporte)\s*"
+        r"(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b",
+    ),
+    (
+        "identificador_directo",
+        r"\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*"
+        r"[:=]\s*[^\n,;]{2,80}",
+    ),
+    (
+        "ubicacion_personal",
+        r"\b(?:mi domicilio|mi dirección|mi direccion|vive en|reside en)\s*[:=]?\s*[^\n,;]{5,100}",
+    ),
+    (
+        "dato_personal",
+        r"\b(?:mi fecha de nacimiento|fecha de nacimiento|naci[oó] el)\s*"
+        r"[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}",
+    ),
+)
+
+_RESEARCH_PERSONAL_CONTEXT_RULES: tuple[tuple[str, str], ...] = (
+    (
+        "informacion_de_salud_personal",
+        r"\bmi\s+(?:diagn[oó]stico|medicaci[oó]n|historia cl[ií]nica|"
+        r"tratamiento|psiquiatra|psic[oó]logo)\b",
+    ),
+    (
+        "informacion_de_salud_personal",
+        r"\b(?:me diagnosticaron|me recetaron|me internaron|padezco|sufro de|"
+        r"estoy en tratamiento por)\b",
+    ),
+    (
+        "informacion_de_alta_sensibilidad",
+        r"\b(?:quiero quitarme la vida|quiero hacerme daño|voy a hacerme daño|"
+        r"fui víctima de|me abusaron|me agredieron|sufrí abuso|sufrí violencia)\b",
+    ),
+)
+
+
+def detect_research_sensitive_content(text: str) -> PrivacyFinding:
+    """Specific privacy gate for general research questions.
+
+    General discussion of medical, historical, or social topics remains searchable.
+    Direct identifiers and explicitly personal sensitive disclosures are blocked.
+    This heuristic is a secondary safeguard, not a guarantee.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return PrivacyFinding(
+            risk="unknown",
+            categories=("contenido_no_verificable",),
+            should_warn=True,
+        )
+
+    categories: set[str] = set()
+    for category, pattern in _RESEARCH_DIRECT_RULES + _RESEARCH_PERSONAL_CONTEXT_RULES:
+        if re.search(pattern, text, re.IGNORECASE):
+            categories.add(category)
+
+    if not categories:
+        return PrivacyFinding(
+            risk="no_signal_detected",
+            categories=(),
+            should_warn=False,
+        )
+
+    risk = "high" if "informacion_de_alta_sensibilidad" in categories else "medium"
+    return PrivacyFinding(
+        risk=risk,
+        categories=tuple(sorted(categories)),
+        should_warn=True,
+    )
