@@ -6,6 +6,7 @@ COPY pyproject.toml README.md ./
 COPY core ./core
 COPY migrations ./migrations
 COPY scripts ./scripts
+COPY frontend ./frontend
 RUN pip install --no-cache-dir .
 USER xilac
 EXPOSE 8000
