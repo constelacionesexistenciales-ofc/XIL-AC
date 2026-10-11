@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from core.audit import record_audit_event
@@ -14,6 +16,12 @@ from core.config import Settings
 from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
 from core.privacy_detector import detect_sensitive_content
+from core.research import (
+    ResearchProviderNotConfigured,
+    ResearchProviderUnavailable,
+    ResearchRateLimited,
+    search_web,
+)
 from core.trace import new_trace
 
 settings = Settings()
@@ -120,3 +128,77 @@ def process(
             "message": "El motor de procesamiento todavía no está conectado.",
         },
     )
+
+
+class ResearchRequest(BaseModel):
+    query: str = Field(min_length=3, max_length=500)
+    count: int = Field(default=5, ge=1, le=10)
+
+
+@app.post("/v1/research")
+def research(
+    request: ResearchRequest,
+    principal: Principal = Depends(require_roles("facilitator", "admin")),
+) -> JSONResponse:
+    """Search public web sources for general research; never stores query text."""
+    finding = detect_sensitive_content(request.query)
+    if finding.should_warn:
+        return JSONResponse(
+            status_code=423,
+            content={
+                "status": "privacy_warning",
+                "code": "POSSIBLE_SENSITIVE_CONTENT",
+                "risk": finding.risk,
+                "categories": list(finding.categories),
+                "notice": PRIVACY_WARNING,
+            },
+        )
+
+    trace = new_trace()
+    try:
+        # Persist intent before sending the query to an external provider.
+        record_audit_event(
+            trace.execution_id,
+            "research.request",
+            principal.subject,
+            "accepted",
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo registrar la auditoría; la búsqueda fue bloqueada.",
+        ) from None
+
+    try:
+        result = search_web(request.query, request.count)
+    except ResearchProviderNotConfigured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La búsqueda web no está configurada. Falta habilitar el proveedor autorizado.",
+        ) from None
+    except ResearchRateLimited:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El proveedor de búsqueda limitó temporalmente las solicitudes.",
+            headers={"Retry-After": "30"},
+        ) from None
+    except ResearchProviderUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="El proveedor de búsqueda no está disponible o devolvió una respuesta inválida.",
+        ) from None
+
+    return JSONResponse(
+        content={
+            "execution_id": trace.execution_id,
+            "status": "completed",
+            "mode": "web_search",
+            "synthesis_status": "not_generated",
+            **result,
+        }
+    )
+
+
+_UI_DIRECTORY = Path(__file__).resolve().parent.parent / "frontend" / "universal-research"
+if _UI_DIRECTORY.is_dir():
+    app.mount("/research-ui", StaticFiles(directory=_UI_DIRECTORY, html=True), name="research-ui")
