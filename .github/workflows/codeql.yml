@@ -1,9 +1,9 @@
 name: CodeQL
 on:
   push:
-    branches: [main]
+    branches: [main, 'feat/**', 'feature/**', 'audit/**']
   pull_request:
-    branches: [main]
+    branches: [main, feat/universal-research-experience, feat/owned-research-engine-evaluation]
   schedule:
     - cron: "23 5 * * 1"
 permissions:
