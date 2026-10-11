@@ -2,20 +2,20 @@
 
 **Tipo de documento:** hoja de ruta, no evidencia de implementación.
 **Regla de avance:** cada cambio debe superar CI y revisión antes de integrarse; si falla, se corrige antes de continuar.
-**Estado de partida:** PR #19 integrada con CI de código y empaquetado correctas. La integración de investigación web está en la PR #20 y no debe declararse terminada hasta que CI esté verde y se integre. El procesamiento de sesiones CFE permanece bloqueado.
+**Estado actualizado 2026-10-11:** PR #19, #20, #22, #23 y #24 están integradas. Las CI de rama de #19–#24 fueron aprobadas; las CI posteriores de main están confirmadas para #19–#23, y la de #24 estaba en curso en la última consulta. El procesamiento de sesiones CFE permanece bloqueado.
 
 ## A. Cerrar las integraciones (16–20)
 
-16. **Cerrar PR #20:** resolver cada fallo de CI, revisar el diff final y exigir CI verde en el SHA exacto antes de fusionar.
-   - Aceptación: tests, Ruff, Bandit y configuración Compose aprobados; ninguna clave real en Git.
-17. **Verificar el endpoint de investigación en `main`:** autenticación, roles, validación de consulta, rechazo de contenido sensible, auditoría previa y respuestas de error.
-   - Aceptación: pruebas HTTP con credenciales de prueba; `/v1/process` sigue bloqueado.
-18. **Reconstruir e integrar #14 sobre el nuevo `main`:** incorporar evaluación tecnológica y pruebas de navegador sin depender de una rama antigua.
-   - Aceptación: flujo de navegador comprobado; prototipo y evaluación documental identificados como tales.
-19. **Reconstruir e integrar #15 sobre el nuevo `main`:** límite compartido en PostgreSQL, migración, respuestas 429/503 y limpieza.
-   - Aceptación: CI verde, sin integración si la migración o las pruebas de concurrencia fallan.
-20. **Validar el límite en PostgreSQL real de prueba:** solicitudes concurrentes, ventanas, reinicio de proceso y caída de base.
-   - Aceptación: límite consistente entre instancias y fallo cerrado cuando la base no está disponible.
+16. **[COMPLETADO] Cerrar PR #20:** integrada como recuperación inicial de fuentes y registro de evidencias.
+   - Evidencia: [CI de PR #20](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144825234); [CI de main posterior](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144929140).
+17. **[COMPLETADO EN CI] Verificar el endpoint de investigación:** autenticación, roles, privacidad, auditoría previa, proveedor y fallos están cubiertos por pruebas HTTP; `/v1/process` sigue bloqueado.
+   - Evidencia: [CI de main posterior a #20](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144929140). La búsqueda con clave real sigue pendiente.
+18. **[COMPLETADO] Integrar #14 mediante PR #22:** evaluación tecnológica y pruebas de navegador Chromium incorporadas.
+   - Evidencia: [CI](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145095662) · [Chromium](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145095578).
+19. **[COMPLETADO] Integrar #15 mediante PR #23:** límite compartido en PostgreSQL, migración, respuestas 429/503 y limpiador por lotes.
+   - Evidencia: [CI de integración](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145508597) · [CI de main posterior](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145583477).
+20. **[COMPLETADO EN CI] Validar el límite en PostgreSQL de prueba:** persistencia, ventanas, concurrencia y fallo cerrado están cubiertos por las pruebas automatizadas.
+   - Pendiente operacional: comprobarlo entre instancias desplegadas y programar/monitorizar la limpieza en el entorno real.
 
 ## B. Convertir la búsqueda en investigación trazable (21–28)
 
