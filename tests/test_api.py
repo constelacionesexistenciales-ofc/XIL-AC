@@ -209,6 +209,7 @@ def test_research_returns_real_provider_results_without_query_logging(monkeypatc
 def test_research_requires_configured_provider(monkeypatch):
     monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
     monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
+    monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
     monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
     response = client.post(
         "/v1/research",
