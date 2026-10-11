@@ -7,6 +7,7 @@ is missing. URLs are metadata only; callers must fetch and assess sources separa
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import ipaddress
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
@@ -27,9 +28,45 @@ class EvidenceRecord:
         errors: list[str] = []
         if not self.evidence_id.strip():
             errors.append("evidence_id_required")
-        parsed = urlparse(self.url)
-        if parsed.scheme not in {"https", "http"} or not parsed.netloc:
-            errors.append("valid_http_url_required")
+        try:
+            parsed = urlparse(self.url)
+            hostname = parsed.hostname
+            port = parsed.port
+        except (TypeError, ValueError):
+            parsed = None
+            hostname = None
+            port = None
+        if (
+            parsed is None
+            or parsed.scheme != "https"
+            or not hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or port not in (None, 443)
+            or any(ord(char) < 32 or char.isspace() for char in self.url)
+            or len(self.url) > 2048
+        ):
+            errors.append("safe_https_url_required")
+        elif (
+            hostname.rstrip(".").lower() == "localhost"
+            or hostname.rstrip(".").lower().endswith((".localhost", ".local", ".internal"))
+        ):
+            errors.append("public_source_host_required")
+        else:
+            try:
+                address = ipaddress.ip_address(hostname.strip("[]"))
+            except ValueError:
+                address = None
+            if address is not None and (
+                not address.is_global
+                or address.is_private
+                or address.is_loopback
+                or address.is_link_local
+                or address.is_multicast
+                or address.is_reserved
+                or address.is_unspecified
+            ):
+                errors.append("public_source_host_required")
         if not self.title.strip():
             errors.append("title_required")
         if not self.publisher.strip():
