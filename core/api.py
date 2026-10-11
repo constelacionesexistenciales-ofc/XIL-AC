@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from core.audit import record_audit_event
 from core.auth import Principal, require_roles
@@ -133,6 +133,18 @@ def process(
 class ResearchRequest(BaseModel):
     query: str = Field(min_length=3, max_length=500)
     count: int = Field(default=5, ge=1, le=10)
+    domain: str = Field(
+        default="general",
+        pattern="^(general|science|history|technology|business|education|cfe)$",
+    )
+
+    @field_validator("query")
+    @classmethod
+    def normalize_query(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < 3:
+            raise ValueError("La consulta debe contener al menos 3 caracteres útiles.")
+        return normalized
 
 
 @app.post("/v1/research")
@@ -193,6 +205,7 @@ def research(
             "execution_id": trace.execution_id,
             "status": "completed",
             "mode": "web_search",
+            "domain": request.domain,
             "synthesis_status": "not_generated",
             **result,
         }
