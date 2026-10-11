@@ -49,3 +49,8 @@ Cada adaptador futuro deberá definir:
 - **Fase 5 — puerta de calidad:** pruebas de precisión, recuperación, atribución, errores, costo y seguridad antes de llamarlo operativo.
 
 No declarar el motor activo hasta completar y verificar las fases necesarias en el entorno real.
+
+
+## Estado de integración de búsqueda web
+
+La primera integración usa el proveedor Brave Search mediante la variable de entorno `BRAVE_SEARCH_API_KEY`. La clave debe configurarse como secreto en el entorno de ejecución y nunca almacenarse en Git. La ruta de búsqueda recupera fuentes públicas y registra su procedencia; todavía no genera una síntesis ni contrasta afirmaciones de forma autónoma. Las consultas se transmiten al proveedor externo, por lo que no deben incluir datos personales ni información de consultantes. La integración se considera provisional hasta completar CI, pruebas de extremo a extremo con el proveedor autorizado y evaluación de calidad.
