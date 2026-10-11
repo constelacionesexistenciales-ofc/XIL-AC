@@ -54,3 +54,12 @@ No declarar el motor activo hasta completar y verificar las fases necesarias en 
 ## Estado de integración de búsqueda web
 
 La primera integración usa el proveedor Brave Search mediante la variable de entorno `BRAVE_SEARCH_API_KEY`. La clave debe configurarse como secreto en el entorno de ejecución y nunca almacenarse en Git. La ruta de búsqueda recupera fuentes públicas y registra su procedencia; todavía no genera una síntesis ni contrasta afirmaciones de forma autónoma. Las consultas se transmiten al proveedor externo, por lo que no deben incluir datos personales ni información de consultantes. La integración se considera provisional hasta completar CI, pruebas de extremo a extremo con el proveedor autorizado y evaluación de calidad.
+
+
+## Adaptador autoalojado (rama de implementación)
+
+La implementación en desarrollo añade RESEARCH_BACKEND=searxng como alternativa a Brave Search API. Requiere una instancia SearXNG propia y no requiere BRAVE_SEARCH_API_KEY. El servicio opcional está descrito en compose.selfhosted-search.yaml; debe mantenerse en la red interna y no exponerse directamente.
+
+Esta opción elimina la dependencia de una clave comercial única, pero no hace que todo el índice web sea propio: los motores consultados por SearXNG siguen siendo terceros. Para búsquedas sin dependencia de motores externos, XIL-AC necesita un índice local de documentos obtenidos de fuentes autorizadas y una política de actualización. Esta funcionalidad todavía no está construida.
+
+No habilitar el procesamiento real de sesiones CFE por incorporar este adaptador.
