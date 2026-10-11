@@ -144,7 +144,7 @@ def test_research_blocks_sensitive_queries_before_provider(monkeypatch):
     response = client.post(
         "/v1/research",
         headers={"Authorization": "Bearer test-secret"},
-        json={"query": "diagnóstico de salud mental de una persona"},
+        json={"query": "mi diagnóstico de salud mental"},
     )
     assert response.status_code == 423
     assert response.json()["code"] == "POSSIBLE_SENSITIVE_CONTENT"
@@ -233,3 +233,26 @@ def test_research_ui_is_served_by_the_api():
     response = client.get("/research-ui/")
     assert response.status_code == 200
     assert "INVESTIGACIÓN UNIVERSAL" in response.text
+
+
+def test_research_allows_general_medical_topics(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: None)
+    monkeypatch.setattr(
+        api,
+        "search_web",
+        lambda query, count: {
+            "provider": "brave_search",
+            "query": query,
+            "retrieved_at": "2026-10-10T12:00:00+00:00",
+            "result_count": 0,
+            "results": [],
+        },
+    )
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "diagnóstico temprano de ELA: evidencia clínica", "domain": "science"},
+    )
+    assert response.status_code == 200
+    assert response.json()["domain"] == "science"
