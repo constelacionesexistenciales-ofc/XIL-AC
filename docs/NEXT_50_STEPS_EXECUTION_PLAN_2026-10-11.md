@@ -6,8 +6,8 @@
 
 ## Estado ejecutivo
 
-- **Verificado:** CI de PR #31 exitosa en el SHA 7477aef; CI de PR #32 exitosa en la revisión anterior; Semgrep y Trivy finalizaron correctamente y sus informes se publicaron como artefactos con 30 días de retención.
-- **Cambio realizado ahora:** workflow SAST actualizado en PR #32 a commit 1c0729db6e7e044953ea142655ca148ed11f33bf; se fijaron las llamadas restantes a checkout/upload-artifact por SHA y Semgrep a versión exacta 1.180.0. La nueva ejecución de este commit aún necesita confirmación.
+- **Verificado:** CI de PR #31 exitosa en el SHA 7477aef; CI de PR #32 exitosa en el SHA actualizado 1c0729db6e7e044953ea142655ca148ed11f33bf; Semgrep y Trivy finalizaron correctamente y sus informes se publicaron como artefactos con 30 días de retención.
+- **Cambio realizado ahora:** workflow SAST actualizado en PR #32 a commit 1c0729db6e7e044953ea142655ca148ed11f33bf; se fijaron las llamadas restantes a checkout/upload-artifact por SHA y Semgrep a versión exacta 1.180.0. La ejecución SAST 38177719130 confirmó éxito en ambos trabajos y publicó informes nuevos; el CI general asociado seguía en curso al último chequeo.
 - **Pendiente crítico:** CodeQL continúa omitido en el repositorio privado; PR #32 sigue con mergeable=false y requiere resolver su base/estado antes de integrar.
 - **No ejecutable desde el conector por sí solo:** despliegue real, instalación/descarga de modelos, ejecución real de SearXNG/Ollama, pentest, carga, RBAC/OIDC real, restauración de backups y aprobación de producción.
 - **Seguridad:** PR #31/#32/#27/#29 siguen sin fusionar según la consulta; CFE permanece deshabilitado para sesiones reales.
@@ -16,14 +16,14 @@
 
 1. **HECHO** — Consultar metadatos actuales de PR #31 y #32.
 2. **HECHO** — Verificar CI de PR #31 en el SHA 7477aefcbde1cd789ac6ecfc34837a940e4d784c.
-3. **HECHO, SHA anterior** — Verificar CI de PR #32 en f37fad78325339d6545e81fbcdcebe7efc94b4d0.
-4. **HECHO, SHA anterior** — Confirmar que Semgrep se ejecuta y finaliza sin activar el bloqueo.
-5. **HECHO, SHA anterior** — Confirmar que Trivy se ejecuta y finaliza sin activar el umbral HIGH/CRITICAL.
+3. **HECHO** — Verificar CI anterior de PR #32 en f37fad78325339d6545e81fbcdcebe7efc94b4d0 y SAST actualizado en 1c0729db6e7e044953ea142655ca148ed11f33bf.
+4. **HECHO** — Confirmar que Semgrep se ejecuta y finaliza sin activar el bloqueo en la ejecución actual 38177719130.
+5. **HECHO** — Confirmar que Trivy se ejecuta y finaliza sin activar el umbral HIGH/CRITICAL en la ejecución actual 38177719130.
 6. **HECHO** — Confirmar que existen artefactos JSON de Semgrep y Trivy, con caducidad de 30 días.
 7. **HECHO** — Confirmar que CodeQL termina como skipped, no como análisis aprobado.
 8. **HECHO** — Revisar los pasos del trabajo CI: SBOM, auditoría de dependencias, Bandit, Ruff y pruebas.
 9. **HECHO** — Confirmar estado de PR #27 y #29: CI exitosa en los SHA consultados, PR abiertas.
-10. **PARCIAL** — Registrar resultados y límites en este documento; falta que termine la nueva ejecución tras el commit SAST actualizado.
+10. **HECHO** — Registrar resultados y límites; nueva ejecución SAST revisada. El CI general del SHA nuevo todavía debe terminar.
 
 ## Fase 2 — cadena de suministro y CI (11–20)
 
