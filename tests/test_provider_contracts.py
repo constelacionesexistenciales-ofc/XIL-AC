@@ -20,4 +20,5 @@ def test_search_contract_keeps_provider_provenance():
 
 def test_model_response_is_plain_metadata():
     response = ModelResponse(provider="local", model="example:small", text="ok", duration_ms=3)
-    assert response.local_only if hasattr(response, "local_only") else response.provider == "local"
+    assert response.provider == "local"
+    assert response.text == "ok"
