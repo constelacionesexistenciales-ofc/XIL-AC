@@ -73,3 +73,31 @@ def test_rate_limit_rejects_invalid_configuration(limit, window_seconds):
         rate_limit.enforce_rate_limit(
             "user-1", "research", limit=limit, window_seconds=window_seconds
         )
+
+def test_rate_limit_uses_new_bucket_after_window_rollover(monkeypatch):
+    fake = FakeConnection([1, 1])
+    monkeypatch.setattr(rate_limit, "connection", lambda: fake_db(fake))
+    rate_limit.enforce_rate_limit("user-1", "research", limit=1, window_seconds=60, now=119)
+    rate_limit.enforce_rate_limit("user-1", "research", limit=1, window_seconds=60, now=120)
+    # Each request is assigned to its own fixed-window bucket at the boundary.
+    assert fake.parameters[2] == 120
+
+
+def test_rate_limit_isolates_subjects_and_scopes(monkeypatch):
+    fake = FakeConnection([1, 1, 1])
+    monkeypatch.setattr(rate_limit, "connection", lambda: fake_db(fake))
+    rate_limit.enforce_rate_limit("user-1", "research", now=121)
+    first_subject_hash, first_scope, first_bucket = fake.parameters
+    rate_limit.enforce_rate_limit("user-2", "research", now=121)
+    second_subject_hash, second_scope, second_bucket = fake.parameters
+    rate_limit.enforce_rate_limit("user-1", "admin-research", now=121)
+    third_subject_hash, third_scope, third_bucket = fake.parameters
+    assert first_subject_hash != second_subject_hash
+    assert first_scope == second_scope == "research"
+    assert third_scope == "admin-research"
+    assert first_bucket == second_bucket == third_bucket == 120
+
+
+def test_rate_limit_rejects_empty_subject(monkeypatch):
+    with pytest.raises(ValueError, match="subject"):
+        rate_limit.enforce_rate_limit("   ", "research")
