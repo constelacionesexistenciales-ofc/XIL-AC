@@ -44,4 +44,5 @@ jobs:
           pip install "bandit>=1.7,<2.0"
           bandit -q -r core -ll
       - run: ruff check core tests scripts
-      - run: pytest
+      - name: Run unit and integration tests (browser suite runs in its dedicated workflow)
+        run: pytest --ignore=tests/browser
