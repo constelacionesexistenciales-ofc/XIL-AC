@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from core.audit import record_audit_event
+from core.evidence_registry import EvidenceRecord, ResearchReport, abstention_claim
 from core.auth import Principal, require_roles
 from core.config import Settings
 from core.db import check_database
@@ -129,3 +130,125 @@ def process(
         },
     )
 
+
+
+class ResearchRequest(BaseModel):
+    query: str = Field(min_length=3, max_length=500)
+    count: int = Field(default=5, ge=1, le=10)
+    domain: str = Field(
+        default="general",
+        pattern="^(general|science|history|technology|business|education|cfe)$",
+    )
+
+    @field_validator("query")
+    @classmethod
+    def normalize_query(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < 3:
+            raise ValueError("La consulta debe contener al menos 3 caracteres útiles.")
+        return normalized
+
+
+@app.post("/v1/research")
+def research(
+    request: ResearchRequest,
+    principal: Principal = Depends(require_roles("facilitator", "admin")),
+) -> JSONResponse:
+    """Search public web sources for general research; never stores query text."""
+    finding = detect_research_sensitive_content(request.query)
+    if finding.should_warn:
+        return JSONResponse(
+            status_code=423,
+            content={
+                "status": "privacy_warning",
+                "code": "POSSIBLE_SENSITIVE_CONTENT",
+                "risk": finding.risk,
+                "categories": list(finding.categories),
+                "notice": PRIVACY_WARNING,
+            },
+        )
+
+    trace = new_trace()
+    try:
+        # Persist intent before sending the query to an external provider.
+        record_audit_event(
+            trace.execution_id,
+            "research.request",
+            principal.subject,
+            "accepted",
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo registrar la auditoría; la búsqueda fue bloqueada.",
+        ) from None
+
+    try:
+        result = search_web(request.query, request.count)
+    except ResearchProviderNotConfigured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La búsqueda web no está configurada. Falta habilitar el proveedor autorizado.",
+        ) from None
+    except ResearchRateLimited:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El proveedor de búsqueda limitó temporalmente las solicitudes.",
+            headers={"Retry-After": "30"},
+        ) from None
+    except ResearchProviderUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="El proveedor de búsqueda no está disponible o devolvió una respuesta inválida.",
+        ) from None
+
+    evidence_records = [
+        EvidenceRecord(
+            evidence_id=f"e{index}",
+            url=item["url"],
+            title=item["title"],
+            publisher=item.get("domain") or "publisher_unknown",
+            retrieved_at=result["retrieved_at"],
+            excerpt=item.get("description") or "",
+            source_type="web",
+        )
+        for index, item in enumerate(result.get("results", []), start=1)
+    ]
+    research_report = ResearchReport(
+        execution_id=trace.execution_id,
+        question=request.query,
+        evidence=evidence_records,
+        claims=[
+            abstention_claim(
+                "c1",
+                "Se recuperaron fuentes, pero todavía no existe síntesis ni contraste automatizado.",
+            )
+        ],
+        limitations=[
+            "La recuperación de fuentes no verifica por sí sola la exactitud de su contenido.",
+            "No se han contrastado afirmaciones entre fuentes independientes.",
+        ],
+    )
+    if not research_report.is_publishable():
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Las fuentes recuperadas no superaron la validación de trazabilidad.",
+        )
+
+    return JSONResponse(
+        content={
+            "execution_id": trace.execution_id,
+            "status": "completed",
+            "mode": "web_search",
+            "domain": request.domain,
+            "synthesis_status": "not_generated",
+            "evidence_registry_valid": True,
+            "research_report": research_report.to_dict(),
+            **result,
+        }
+    )
+
+
+_UI_DIRECTORY = Path(__file__).resolve().parent.parent / "frontend" / "universal-research"
+if _UI_DIRECTORY.is_dir():
+    app.mount("/research-ui", StaticFiles(directory=_UI_DIRECTORY, html=True), name="research-ui")
