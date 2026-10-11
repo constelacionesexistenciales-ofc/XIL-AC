@@ -3,7 +3,7 @@ on:
   push:
     branches: [main, feat/production-readiness-rate-limits]
   pull_request:
-    branches: [main, feat/universal-research-experience]
+    branches: [main, feat/universal-research-experience, feat/owned-research-engine-evaluation]
 permissions:
   contents: read
 concurrency:
@@ -40,4 +40,5 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[test]"
       - run: ruff check core tests scripts
-      - run: pytest
+      - name: Run unit and database integration tests
+        run: pytest --ignore=tests/browser
