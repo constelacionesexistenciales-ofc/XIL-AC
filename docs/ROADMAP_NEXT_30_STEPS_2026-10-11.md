@@ -25,8 +25,8 @@
    - Aceptación: timeout, error 429, clave ausente, respuesta inválida y caída del proveedor cubiertos; registrar solo metadatos técnicos.
 23. **Normalizar fuentes:** URL HTTPS, título, dominio/editor, fecha disponible, fecha de recuperación y deduplicación.
    - Aceptación: descartar URL inseguras, registros malformados y duplicados.
-24. **Conectar cada resultado al registro de evidencias.**
-   - Aceptación: cada fuente tiene ID estable dentro de la ejecución y la respuesta incluye limitaciones.
+24. **[COMPLETADO EN CÓDIGO/CI] Conectar cada resultado al registro de evidencias.** Cada fuente recuperada recibe ID en la ejecución y el informe conserva limitaciones y abstención explícita.
+   - Evidencia: [CI de la integración de investigación](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38144825234).
 25. **Implementar extracción de afirmaciones como módulo separado.**
    - Aceptación: cada afirmación debe enlazar evidencia o convertirse en abstención explícita; no inventar citas.
 26. **Agregar contraste entre fuentes independientes.**
@@ -50,8 +50,8 @@
    - Aceptación: `execution_id` conecta solicitud, proveedor, evidencias y decisión sin almacenar consulta sensible ni secretos en logs.
 34. **Crear el planificador de tareas con estados explícitos.**
    - Aceptación: plan, ejecución, checkpoint, cancelación, error, recuperación y finalización; nada se ejecuta fuera de la lista autorizada.
-35. **Integrar permisos mínimos y Human Gate.**
-   - Aceptación: acciones externas, gasto por encima del umbral y cambios de estado sensibles requieren autorización; cancelación efectiva.
+35. **[PARCIAL] Integrar permisos mínimos y Human Gate.** Existe un evaluador determinista de políticas con lista permitida, permisos mínimos y aprobación para acciones de alto riesgo/externas; aún no está conectado a un ejecutor ni autentica una aprobación real.
+   - Evidencia: [CI del control de autonomía](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38145641082). Pendiente: integración con identidad, TRACE persistente, cancelación efectiva y límites de gasto.
 36. **Añadir presupuestos, cuotas y recuperación segura.**
    - Aceptación: límites por usuario/tarea, reintentos acotados, circuit breaker, idempotencia y ausencia de reintentos infinitos.
 
