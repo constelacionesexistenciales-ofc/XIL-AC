@@ -16,7 +16,12 @@ from core.config import Settings
 from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
 from core.privacy_detector import detect_research_sensitive_content, detect_sensitive_content
-from core.research import ResearchProviderNotConfigured, ResearchProviderUnavailable, ResearchRateLimited, search_web
+from core.research import (
+    ResearchProviderNotConfigured,
+    ResearchProviderUnavailable,
+    ResearchRateLimited,
+    search_web,
+)
 from core.trace import new_trace
 
 settings = Settings()
