@@ -1,4 +1,6 @@
-from playwright.sync_api import Page, expect, sync_playwright
+import json
+
+from playwright.sync_api import expect, sync_playwright
 
 BASE_URL = "http://127.0.0.1:4173/"
 MOCK_PAYLOAD = {
