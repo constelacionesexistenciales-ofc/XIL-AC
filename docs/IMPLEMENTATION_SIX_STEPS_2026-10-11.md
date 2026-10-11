@@ -12,7 +12,8 @@
 ## Paso 2 — Inventario y cadena de suministro
 - Se añade una ruta de CI para generar un SBOM del entorno Python y un informe de auditoría de vulnerabilidades.
 - El SBOM de CI describe el entorno que se instaló en ese trabajo; no equivale a un lockfile reproducible ni a un inventario de imágenes de contenedor.
-- Sigue pendiente resolver findings concretos, fijar versiones/digests de imágenes y establecer una política de actualización/revisión.
+- El primer informe real de pip-audit detectó pytest 8.4.2 vulnerable (CVE-2025-71176 / GHSA-6w46-j5rx-g56g); se elevó el mínimo a pytest 9.0.3. La corrección requiere confirmación de un nuevo informe limpio en CI.
+- Sigue pendiente fijar versiones/digests de imágenes y establecer una política de actualización/revisión.
 
 ## Paso 3 — Contratos de adaptadores
 - Se añade `core/provider_contracts.py` con contratos tipados para investigación e inferencia.
