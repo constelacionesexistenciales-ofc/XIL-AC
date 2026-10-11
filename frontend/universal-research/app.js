@@ -26,6 +26,7 @@
   const localPrivacyPatterns = [
     /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
     /\b(?:DNI|CUIL|CUIT|pasaporte)\s*(?:n(?:ro|úm(?:ero)?)?\.?\s*)?[:#-]?\s*[A-Z0-9.-]{6,}\b/i,
+    /\b(?:teléfono|telefono|celular|whatsapp|contacto)\s*[:=]?\s*\+?\d[\d\s().-]{7,}\d\b/i,
     /\b(?:nombre completo|nombre y apellido|nombre del consultante|consultante|paciente)\s*[:=]\s*[^\n,;]{2,80}/i,
     /\b(?:mi domicilio|mi dirección|mi direccion|vive en|reside en)\s*[:=]?\s*[^\n,;]{5,100}/i,
     /\b(?:mi fecha de nacimiento|fecha de nacimiento|nací el|naci el)\s*[:=]?\s*\d{1,4}[/-]\d{1,2}[/-]\d{1,4}/i,
