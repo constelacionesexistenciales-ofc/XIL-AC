@@ -86,7 +86,7 @@ Los pasos distinguen inspección, cambio propuesto y validación real. “Prepar
 37. Elegir una estrategia de dependencias bloqueadas compatible con Python y generar lockfile con hashes.
 38. Instalar desde cero en un entorno limpio usando solo el lockfile; registrar versiones y resultado.
 39. Fijar acciones externas por SHA completo revisado y documentar el proceso de actualización.
-40. Fijar imágenes de contenedor por versión/digest; generar y guardar SBOM de la imagen.
+40. PARCIAL: CI ya construye la imagen y genera SBOM CycloneDX (118 componentes); Trivy de imagen encontró 44 hallazgos HIGH agrupados en 8 CVE únicos sin versión corregida indicada, por lo que el gate falla. Falta remediar/verificar las CVE, fijar digest y conservar SBOM de imagen.
 41. Definir actualización de dependencias con PR automáticas, CI obligatoria y revisión humana.
 42. Probar que el pipeline falla ante vulnerabilidades de severidad bloqueante y conserva informes aun cuando el job falle.
 
@@ -170,7 +170,7 @@ La eliminación del workflow avanzado está en la rama de la PR, no en `main`. N
 - 34: PENDIENTE — revisar alertas CodeQL manualmente.
 - 35: PARCIAL — informes inspeccionados; detección controlada pendiente; Trivy no aporta evidencia de hallazgos de vulnerabilidad/secretos en el JSON recibido.
 - 36: PARCIAL — PRs identificadas; comparación de diffs y plan de integración aún pendiente.
-- 37–42: PENDIENTE — lockfile con hashes, instalación limpia, pinning completo, SBOM de imagen y prueba de enforcement.
+- 37–42: PARCIAL — SBOM CycloneDX de imagen generado y escaneo real implementado; el gate detectó 44 hallazgos HIGH (8 CVE únicos, sin versión corregida indicada) y falla correctamente. Lockfile con hashes, pinning completo y remediación siguen pendientes.
 - 43–44: PARCIAL — threat model y matriz unitaria ampliada; falta validación adversarial de red.
 - 45–48: PENDIENTE — DNS rebinding, egress real, no-transmisión y ciclo de vida de datos.
 - 49–54: PENDIENTE DE ENTORNO — servicios reales, inferencia, corpus y métricas.
@@ -192,3 +192,17 @@ La eliminación del workflow avanzado está en la rama de la PR, no en `main`. N
 **No completado por falta de evidencia/entorno:** revisión manual de alertas CodeQL, comparación completa de cambios solapados con PR #28 y Dependabot, DNS rebinding y egress real, lockfile reproducible con hashes, SBOM de imagen, servicios de inferencia/búsqueda reales, identidad y secretos de preproducción, restauración de backups, prueba de carga/failover y aprobación de producción.
 
 **Decisión vigente: NO-GO para sesiones reales.**
+
+
+## 8. Resultado de escaneo de imagen — hallazgo bloqueante
+
+En el SHA `407a2df60c8e862040d8d57dc0f5d3b888b8a6a7`, el nuevo job construyó la imagen local y generó el SBOM CycloneDX. El escaneo de imagen de Trivy terminó en fallo por hallazgos HIGH, como exige el gate:
+
+- SBOM CycloneDX: 118 componentes; generado correctamente.
+- Imagen escaneada: `xilac-ci:407a2df60c8e862040d8d57dc0f5d3b888b8a6a7`, base Debian 13.7.
+- Trivy: 44 hallazgos HIGH de paquetes del sistema, correspondientes a 8 CVE únicos; el informe no indica versión corregida para esos registros. No se observaron hallazgos CRITICAL, de configuración ni de secretos en las entradas examinadas.
+- Informe y SBOM quedaron empaquetados en el artefacto `xilac-container-sbom-and-trivy` del run [38307834425](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38307834425).
+
+**Interpretación:** no es un falso positivo demostrado ni corresponde suprimirlo automáticamente. Se debe comprobar la disponibilidad de parches upstream, actualizar/reconstruir la imagen base y repetir el escaneo. Si no hay corrección disponible, documentar cada excepción con exposición, mitigación y aceptación explícita de riesgo. La imagen no debe considerarse aprobada mientras el gate permanezca rojo.
+
+El job de imagen está funcionando como control efectivo y reveló un riesgo que el escaneo de archivos no mostró. La Puerta de Producción sigue en NO-GO.
