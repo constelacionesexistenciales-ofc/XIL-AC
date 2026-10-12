@@ -50,3 +50,11 @@ Docker Compose es solo para desarrollo local, no una receta de despliegue produc
 ## Prototipo de investigación web
 
 La ruta propuesta `POST /v1/research` exige autenticación y rol autorizado, bloquea consultas con señales de datos personales, registra el evento antes de contactar al proveedor y falla de forma cerrada si la auditoría o la configuración no están disponibles. La interfaz se sirve en `/research-ui/`. Para habilitar búsquedas hay que configurar `BRAVE_SEARCH_API_KEY` como secreto fuera del repositorio. La consulta se transmite al proveedor externo; no usar consultas identificables ni información de consultantes. Esta rama requiere CI y revisión antes de integrarse en `main`.
+
+## Asistencia en sesión en tiempo real
+
+La especificación de interfaz conversacional y los casos QA sintéticos están documentados en:
+- [Especificación del asistente en vivo](docs/LIVE_SESSION_ASSISTANT_SPEC.md)
+- [Casos QA del modo en vivo](docs/LIVE_SESSION_ASSISTANT_QA.md)
+
+Estos documentos definen el comportamiento esperado, pero no constituyen una interfaz ejecutable ni habilitan el procesamiento remoto de sesiones. La puerta de producción y `CFE_SESSION_PROCESSING_ENABLED=false` permanecen sin cambios.
