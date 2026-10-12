@@ -136,7 +136,17 @@ No abrir 30 frentes de código simultáneos. Avanzar por bloques pequeños, con 
 - [ ] Paso 34: revisión manual de alertas CodeQL.
 - [ ] Paso 35: prueba de detección controlada y lectura de informes JSON.
 - [ ] Pasos 37–42: no afirmar lockfile, SBOM de imagen ni enforcement nuevo hasta generar y probar esos artefactos.
-- [ ] Pasos 43–48: matriz de amenazas y pruebas de configuración SSRF en desarrollo; no sustituyen pruebas de DNS/red reales.
+- [x] Paso 43 (parcial): se agregó `docs/THREAT_MODEL_INITIAL_2026-10-12.md`, con activos, fronteras de confianza, amenazas y evidencia de cierre.
+- [x] Paso 44 (parcial): se agregaron casos unitarios para URLs SearXNG inseguras/malformadas y redirecciones de origen distinto.
+- [x] Endurecimiento adicional: los handlers de redirección ahora rechazan URLs con usuario/contraseña embebidos; añadido test para rechazar cambios de origen y permitir redirección del mismo origen sin credenciales.
+- [ ] Pasos 45–48: DNS rebinding, control de salida real, prueba de ausencia de transmisión y ciclo de vida de datos siguen pendientes; los tests unitarios no sustituyen pruebas de red.
 - [ ] Pasos 49–60: requieren servicios, secretos, infraestructura y/o aprobación humana; continúan bloqueados hasta configurar y validar el entorno.
 
 La eliminación del workflow avanzado está en la rama de la PR, no en `main`. No se han habilitado sesiones reales ni se ha aprobado la Puerta de Producción.
+
+### Cambios técnicos añadidos en esta continuación
+
+- `tests/test_research_security.py`: pruebas parametrizadas para bloquear IPs de metadatos, redes privadas, loopback IPv6, URL con credenciales, query/fragment no permitidos, esquemas no admitidos y puertos inválidos antes de abrir conexión.
+- `core/research.py`: los handlers de redirección Brave/SearXNG rechazan URL con usuario o contraseña embebidos; el handler SearXNG mantiene restricción de mismo origen.
+- `docs/THREAT_MODEL_INITIAL_2026-10-12.md`: modelo de amenazas inicial y evidencias necesarias para cerrar cada riesgo.
+- La prueba automatizada todavía no se ha declarado aprobada: esperar CI en el SHA final de la PR. No se realizaron pruebas reales de DNS ni de salida de red.
