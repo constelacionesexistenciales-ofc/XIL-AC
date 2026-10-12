@@ -36,7 +36,6 @@ def test_searxng_rejects_untrusted_or_malformed_base_urls_before_network(
 @pytest.mark.parametrize(
     "target",
     [
-        "http://searxng:8080/search",
         "https://searxng:8080/search",
         "http://searxng:8081/search",
         "http://127.0.0.1:8080/search",
@@ -50,3 +49,13 @@ def test_searxng_redirect_handler_rejects_origin_changes(monkeypatch, target):
     rejected = handler.redirect_request(request, None, 302, "Found", {}, target)
 
     assert rejected is None
+
+def test_searxng_redirect_handler_allows_same_origin_without_credentials():
+    handler = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    request = research.Request("http://searxng:8080/search")
+
+    redirected = handler.redirect_request(
+        request, None, 302, "Found", {}, "http://searxng:8080/results"
+    )
+
+    assert redirected is not None
