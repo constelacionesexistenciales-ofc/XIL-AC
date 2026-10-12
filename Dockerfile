@@ -1,4 +1,12 @@
 FROM python:3.12-slim
+
+# Refresh Debian security metadata and apply available security updates.
+# Keep this in the image build so CI scans the same patched image produced here.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 RUN addgroup --system xilac && adduser --system --ingroup xilac xilac
