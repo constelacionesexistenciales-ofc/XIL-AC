@@ -78,7 +78,7 @@ Los pasos distinguen inspección, cambio propuesto y validación real. “Prepar
 32. CI de PR #35 terminó en `success` en SHA `de075f663a18a9d290c800cda505656b887b0426`; al borrar el workflow duplicado, repetir la comprobación en el nuevo SHA.
 33. Diagnóstico completado: el workflow avanzado generó SARIF pero la carga falló porque CodeQL predeterminado está habilitado; se eliminó el workflow duplicado en la rama. Verificar el análisis automático posterior.
 34. Pendiente: revisar alertas de CodeQL en la interfaz de GitHub; no se ha confirmado cantidad ni severidad.
-35. SAST de PR #35 pasó en SHA `bc74f72` ([run 38306624456](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38306624456)). Se inspeccionó el JSON de Semgrep: 0 resultados, sin errores, 151 reglas en 25 archivos. El JSON de Trivy contiene un resultado de configuración de Dockerfile con 20 comprobaciones exitosas y 0 fallidas; no contiene resultados de vulnerabilidades/secretos, por lo que no se interpreta como prueba universal de ausencia de riesgos. La detección controlada sigue pendiente.
+35. SAST de PR #35 pasó en SHA `aa0c81fcad8bbbdb77487717138578a9efcb60c6` ([run 38307610813](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38307610813)). Semgrep: 0 resultados, sin errores, 151 reglas en 25 archivos. La autoprueba detectó 1 hallazgo sintético bloqueante, como se esperaba. Trivy: 20 comprobaciones de configuración de Dockerfile exitosas y 0 fallidas; el JSON no contiene resultados de vulnerabilidades/secretos y no se interpreta como prueba universal de ausencia de riesgos.
 36. Pendiente: revisar PR #28 y Dependabot #3/#4, resolver solapamientos y no fusionar solo por CI verde.
 
 ### Fase G — reproducibilidad y cadena de suministro (37–42)
@@ -134,10 +134,10 @@ No abrir 30 frentes de código simultáneos. Avanzar por bloques pequeños, con 
 - [x] Decisión de arquitectura: usar la configuración predeterminada de CodeQL de GitHub como fuente única y retirar el workflow avanzado duplicado en la rama.
 - [x] Paso 35 (parcial): SAST alternativo pasó en SHA `bc74f72`; Semgrep reportó 0 resultados/0 errores y Trivy informó 20 comprobaciones de configuración de Dockerfile exitosas/0 fallidas. Falta detección controlada y ampliar evidencia de escaneo de dependencias/secretos.
 - [ ] Paso 34: revisión manual de alertas CodeQL; la consulta del endpoint de alertas no está disponible mediante el conector actual, por lo que requiere revisión en la interfaz de GitHub.
-- [x] Paso 35 (parcial): JSON de Semgrep y Trivy descargados e inspeccionados; resultados y límites documentados. [ ] Falta prueba controlada de detección.
+- [x] Paso 35 (parcial): JSON de Semgrep y Trivy inspeccionados; la autoprueba de Semgrep detectó el hallazgo sintético esperado. La cobertura de Trivy para vulnerabilidades/secretos sigue siendo una limitación.
 - [ ] Pasos 37–42: no afirmar lockfile, SBOM de imagen ni enforcement nuevo hasta generar y probar esos artefactos.
 - [x] Paso 43 (parcial): se agregó `docs/THREAT_MODEL_INITIAL_2026-10-12.md`, con activos, fronteras de confianza, amenazas y evidencia de cierre.
-- [x] Paso 44 (parcial): se agregaron casos unitarios para URLs SearXNG inseguras/malformadas y redirecciones de origen distinto; se amplió la matriz para IP privadas en HTTPS, loopback IPv6, IP no especificada, loopback alternativo, credenciales vacías y dominios especiales. El nuevo código aún necesita CI en el SHA resultante.
+- [x] Paso 44 (parcial): se agregaron casos unitarios para URLs SearXNG inseguras/malformadas y redirecciones de origen distinto; se amplió la matriz para IP privadas en HTTPS, loopback IPv6, IP no especificada, loopback alternativo, credenciales vacías y dominios especiales. CI/SAST pasaron en SHA `aa0c81fcad8bbbdb77487717138578a9efcb60c6` (126 tests aprobados, 1 advertencia).
 - [x] Endurecimiento adicional: los handlers de redirección ahora rechazan URLs con usuario/contraseña embebidos; añadido test para rechazar cambios de origen y permitir redirección del mismo origen sin credenciales.
 - [ ] Pasos 45–48: DNS rebinding, control de salida real, prueba de ausencia de transmisión y ciclo de vida de datos siguen pendientes; los tests unitarios no sustituyen pruebas de red.
 - [ ] Pasos 49–60: requieren servicios, secretos, infraestructura y/o aprobación humana; continúan bloqueados hasta configurar y validar el entorno.
@@ -177,3 +177,18 @@ La eliminación del workflow avanzado está en la rama de la PR, no en `main`. N
 - 55–60: PENDIENTE DE CONFIGURACIÓN/APROBACIÓN — identidad real, secretos, preproducción, recuperación y Puerta de Producción.
 
 **Decisión:** NO-GO para sesiones reales hasta que la evidencia faltante sea resuelta y la aprobación humana quede registrada.
+
+
+## 7. Cierre de validación del cambio de seguridad
+
+- SHA final validado en esta iteración: `aa0c81fcad8bbbdb77487717138578a9efcb60c6`.
+- [CI push](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38307610818): `success`; 126 tests aprobados, 1 advertencia; Ruff y Bandit aprobados; `pip-audit` indicó que no encontró vulnerabilidades conocidas; el SBOM Python se generó y el gate de dependencias pasó.
+- [SAST push](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38307610813): `success`. Semgrep 1.180.0: 0 hallazgos en el código escaneado, 0 errores, 151 reglas y 25 archivos; autoprueba sintética: 1 hallazgo detectado y validación aprobada.
+- Trivy 0.74.0: el artefacto reporta 20 comprobaciones de configuración del Dockerfile exitosas y 0 fallidas. No hay entradas de vulnerabilidades/secretos en el JSON recibido; el escaneo de archivos no sustituye una auditoría completa de imagen y dependencias.
+- La advertencia de CI permanece identificada; no se considera un fallo de pruebas, pero debe revisarse en mantenimiento.
+- El cambio en SearXNG ahora rechaza IP literales no públicas como destino base y ciertos nombres de uso especial por HTTPS; los tests de regresión quedaron cubiertos por CI.
+- La ejecución de SAST de `push` pasó. Un run separado por `pull_request` seguía en curso en el momento del corte; la PR permanece en borrador y no se fusionó.
+
+**No completado por falta de evidencia/entorno:** revisión manual de alertas CodeQL, comparación completa de cambios solapados con PR #28 y Dependabot, DNS rebinding y egress real, lockfile reproducible con hashes, SBOM de imagen, servicios de inferencia/búsqueda reales, identidad y secretos de preproducción, restauración de backups, prueba de carga/failover y aprobación de producción.
+
+**Decisión vigente: NO-GO para sesiones reales.**
