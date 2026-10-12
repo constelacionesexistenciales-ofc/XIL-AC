@@ -22,6 +22,8 @@ class _HTTPSProviderRedirectHandler(HTTPRedirectHandler):
         if (
             parsed.scheme != "https"
             or parsed.hostname != "api.search.brave.com"
+            or parsed.username is not None
+            or parsed.password is not None
             or port not in (None, 443)
         ):
             return None
@@ -57,7 +59,11 @@ class _SameOriginRedirectHandler(HTTPRedirectHandler):
             port = parsed.port or (443 if parsed.scheme == "https" else 80)
         except ValueError:
             return None
-        if (parsed.scheme, parsed.hostname or "", port) != self._origin:
+        if (
+            parsed.username is not None
+            or parsed.password is not None
+            or (parsed.scheme, parsed.hostname or "", port) != self._origin
+        ):
             return None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
