@@ -26,12 +26,20 @@ class Settings:
     oidc_audience: str = os.getenv("OIDC_AUDIENCE", "").strip()
     oidc_jwks_url: str = os.getenv("OIDC_JWKS_URL", "").strip()
     oidc_roles_claim: str = os.getenv("OIDC_ROLES_CLAIM", "roles").strip()
+    research_rate_limit_requests: int = int(os.getenv("RESEARCH_RATE_LIMIT_REQUESTS", "30"))
+    research_rate_limit_window_seconds: int = int(
+        os.getenv("RESEARCH_RATE_LIMIT_WINDOW_SECONDS", "60")
+    )
 
     def validate(self) -> None:
         if self.environment not in {"development", "test", "staging", "production"}:
             raise ValueError("APP_ENV must be development, test, staging or production")
         if self.log_level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
             raise ValueError("LOG_LEVEL is invalid")
+        if self.research_rate_limit_requests < 1:
+            raise ValueError("RESEARCH_RATE_LIMIT_REQUESTS must be positive")
+        if self.research_rate_limit_window_seconds < 1:
+            raise ValueError("RESEARCH_RATE_LIMIT_WINDOW_SECONDS must be positive")
         if self.environment in {"staging", "production"}:
             if not self.oidc_issuer:
                 raise ValueError("OIDC_ISSUER is required in staging and production")

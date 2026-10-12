@@ -2,13 +2,13 @@ name: Research UI browser tests
 
 on:
   push:
-    branches: [feat/owned-research-engine-evaluation]
+    branches: [feat/owned-research-engine-evaluation, feat/production-readiness-rate-limits]
     paths:
       - "frontend/universal-research/**"
       - "tests/browser/**"
       - ".github/workflows/research-ui-browser.yml"
   pull_request:
-    branches: [main, feat/universal-research-experience]
+    branches: [main, feat/universal-research-experience, feat/owned-research-engine-evaluation]
     paths:
       - "frontend/universal-research/**"
       - "tests/browser/**"

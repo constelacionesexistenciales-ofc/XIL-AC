@@ -17,9 +17,11 @@
 - [ ] Ejecutar y revisar CI completa, análisis estático y CodeQL sobre esta rama.
 - [ ] Configurar y probar la clave del proveedor en un gestor de secretos; verificar el flujo de extremo a extremo.
 - [ ] Configurar y verificar un proveedor OIDC real y limitar roles al mínimo necesario.
-- [ ] Implementar límites de solicitudes compartidos entre instancias y límites de gasto del proveedor.
+- [x] Límite inicial compartido por PostgreSQL implementado en rama de desarrollo; CI, integración y concurrencia pendientes.
+- [ ] Implementar límites de gasto/cuotas del proveedor.
 - [ ] Añadir protección CSRF/CORS y política de seguridad de contenido según el modelo de despliegue.
-- [x] Añadir una comprobación local de patrones obvios de datos personales en la interfaz, antes de enviar la consulta.\n- [ ] Medir falsos positivos y falsos negativos del detector local y del servidor con datos sintéticos representativos.
+- [x] Añadir una comprobación local de patrones obvios de datos personales en la interfaz, antes de enviar la consulta.
+- [ ] Medir falsos positivos y falsos negativos del detector local y del servidor con datos sintéticos representativos.
 - [ ] Conectar evaluación de calidad, recuperación autorizada de fuentes y síntesis con citas.
 - [ ] Implementar observabilidad sin registrar consultas sensibles ni secretos.
 - [ ] Probar copias de seguridad, restauración, aislamiento, seguridad y carga.

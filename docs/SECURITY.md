@@ -17,6 +17,7 @@
 - Antes de habilitar contenido real, verificar consentimiento, minimización, retención y borrado; documentar qué proveedores reciben datos y por cuánto tiempo.
 - No usar planes gratuitos sin copias de seguridad como archivo maestro de sesiones. Mantener cualquier copia autorizada cifrada y comprobar restauración.
 - La integración OIDC debe probarse con el proveedor real; confirmar el claim de roles en un token real sin copiar ni publicar el token.
-- La búsqueda todavía requiere límites de solicitudes compartidos entre instancias, límites de gasto, OIDC real y verificación de extremo a extremo antes de producción.
+- La rama de preparación incorpora un límite inicial de solicitudes de búsqueda compartido mediante PostgreSQL, con `429` y `Retry-After`; la validación de concurrencia/CI, la limpieza y retención de buckets y los límites de gasto siguen pendientes antes de producción.
+- El límite inicial se configura mediante `RESEARCH_RATE_LIMIT_REQUESTS` y `RESEARCH_RATE_LIMIT_WINDOW_SECONDS`. La indisponibilidad de la base de control bloquea la búsqueda en lugar de omitir el límite.
 - CI ejecuta pruebas unitarias e integración PostgreSQL; CodeQL analiza el código y Dependabot propone actualizaciones.
 - Reportar vulnerabilidades en privado al mantenedor; no publicar datos personales ni secretos en incidencias.

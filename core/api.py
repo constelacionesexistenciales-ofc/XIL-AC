@@ -16,6 +16,11 @@ from core.config import Settings
 from core.db import check_database
 from core.middleware import MaxRequestBodySizeMiddleware
 from core.privacy_detector import detect_research_sensitive_content, detect_sensitive_content
+from core.rate_limit import (
+    RateLimitExceeded,
+    RateLimitStorageUnavailable,
+    enforce_rate_limit,
+)
 from core.research import (
     ResearchProviderNotConfigured,
     ResearchProviderUnavailable,
@@ -167,6 +172,25 @@ def research(
         )
 
     trace = new_trace()
+    try:
+        enforce_rate_limit(
+            principal.subject,
+            "research",
+            limit=settings.research_rate_limit_requests,
+            window_seconds=settings.research_rate_limit_window_seconds,
+        )
+    except RateLimitExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Se alcanzó el límite temporal de búsquedas. Intentá más tarde.",
+            headers={"Retry-After": str(exc.retry_after)},
+        ) from None
+    except RateLimitStorageUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo verificar el límite de uso; la búsqueda fue bloqueada.",
+        ) from None
+
     try:
         # Persist intent before sending the query to an external provider.
         record_audit_event(

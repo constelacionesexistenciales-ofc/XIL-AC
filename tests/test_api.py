@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 import core.auth as auth
@@ -5,6 +6,11 @@ import core.api as api
 from core.config import Settings
 
 client = TestClient(api.app)
+
+
+@pytest.fixture(autouse=True)
+def bypass_shared_rate_limit_for_unrelated_api_tests(monkeypatch):
+    monkeypatch.setattr(api, "enforce_rate_limit", lambda *args, **kwargs: None)
 
 
 def test_liveness_is_public_and_minimal():
@@ -257,3 +263,47 @@ def test_research_allows_general_medical_topics(monkeypatch):
     )
     assert response.status_code == 200
     assert response.json()["domain"] == "science"
+
+
+
+def test_research_rate_limit_returns_429_and_retry_after(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(
+        api,
+        "enforce_rate_limit",
+        lambda *args, **kwargs: (_ for _ in ()).throw(api.RateLimitExceeded(17)),
+    )
+    monkeypatch.setattr(
+        api,
+        "record_audit_event",
+        lambda *args: (_ for _ in ()).throw(AssertionError("audit must not run")),
+    )
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "renewable energy trends"},
+    )
+    assert response.status_code == 429
+    assert response.headers["Retry-After"] == "17"
+    assert "límite temporal" in response.json()["detail"]
+
+
+def test_research_rate_limit_fails_closed_if_storage_is_unavailable(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(
+        api,
+        "enforce_rate_limit",
+        lambda *args, **kwargs: (_ for _ in ()).throw(api.RateLimitStorageUnavailable()),
+    )
+    monkeypatch.setattr(
+        api,
+        "record_audit_event",
+        lambda *args: (_ for _ in ()).throw(AssertionError("audit must not run")),
+    )
+    response = client.post(
+        "/v1/research",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"query": "renewable energy trends"},
+    )
+    assert response.status_code == 503
+    assert "límite de uso" in response.json()["detail"]
