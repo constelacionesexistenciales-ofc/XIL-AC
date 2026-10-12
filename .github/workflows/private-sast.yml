@@ -37,6 +37,40 @@ jobs:
         run: |
           semgrep scan --config p/python --json --output semgrep-report.json --error .
 
+      - name: Verify Semgrep engine with controlled fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/xilac-semgrep-control"
+          cat > "$RUNNER_TEMP/xilac-semgrep-control/unsafe_fixture.py" <<'PY'
+          import subprocess
+
+          subprocess.call("echo controlled-semgrep-test", shell=True)
+          PY
+          cat > "$RUNNER_TEMP/xilac-semgrep-control/rule.yml" <<'YAML'
+          rules:
+            - id: xilac-controlled-shell-true
+              languages: [python]
+              severity: ERROR
+              message: Controlled fixture must be detected by the Semgrep engine.
+              pattern: subprocess.call(..., shell=True)
+          YAML
+          semgrep scan \
+            --config "$RUNNER_TEMP/xilac-semgrep-control/rule.yml" \
+            --json \
+            --output "$RUNNER_TEMP/xilac-semgrep-control/report.json" \
+            "$RUNNER_TEMP/xilac-semgrep-control/unsafe_fixture.py"
+          python - "$RUNNER_TEMP/xilac-semgrep-control/report.json" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as report_file:
+              report = json.load(report_file)
+          if report.get("errors") or not report.get("results"):
+              raise SystemExit("Semgrep controlled detection self-test failed")
+          print("Semgrep controlled detection self-test passed")
+          PY
+
       - name: Upload Semgrep report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
