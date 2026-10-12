@@ -17,8 +17,9 @@ Esto demuestra **capacidad de expansión arquitectónica**, no autonomía integr
 - SHA principal auditado: `6a483735ac5c88f972ca48dac45b1b0815b3cbdc`.
 - CI de `main`: [ejecución 38296724126](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38296724126), conclusión `success`.
 - SAST alternativo Semgrep/Trivy: [ejecución 38296724110](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38296724110), conclusión `success`. Deben revisarse los informes JSON; el estado exitoso no prueba ausencia absoluta de riesgos.
-- CodeQL propio: [ejecución 38296724238](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38296724238), conclusión `skipped`.
-- Configuración automática CodeQL de GitHub: [ejecución 38305482632](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38305482632), conclusión `success`; se confirmaron análisis exitosos para Python, JavaScript/TypeScript y GitHub Actions. Esto no sustituye la revisión de alertas.
+- CodeQL automático de GitHub en `main`: [ejecución 38305482632](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38305482632), conclusión `success`; se confirmaron análisis exitosos para Python, JavaScript/TypeScript y GitHub Actions.
+- La ejecución del workflow avanzado de prueba en PR #35 ([run 38306227059](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38306227059)) terminó en `failure` al cargar SARIF: GitHub indicó que la configuración predeterminada estaba habilitada y no acepta resultados de una configuración avanzada simultánea. La extracción y generación SARIF sí llegaron a completarse.
+- Decisión correctiva: eliminar el workflow duplicado y conservar CodeQL Setup predeterminado como fuente única de análisis, en lugar de pedir al usuario que mantenga dos configuraciones incompatibles.
 - PR abierta de endurecimiento de investigación: [PR #28](https://github.com/constelacionesexistenciales-ofc/XIL-AC/pull/28). No integrar automáticamente ni duplicar sus cambios.
 - Puerta vigente: [docs/PRODUCTION_GATE.md](PRODUCTION_GATE.md).
 
@@ -36,14 +37,14 @@ Los pasos distinguen inspección, cambio propuesto y validación real. “Prepar
 | 4 | Verificar ejecución SAST alternativa | HECHO PARCIAL | Run 38296724110 terminó en éxito; falta revisar los artefactos JSON completos y probar detección controlada. |
 | 5 | Verificar CodeQL propio | HECHO | Run 38296724238 está omitido; no se considera análisis aprobado. |
 | 6 | Contrastar CodeQL automático de GitHub | HECHO | Run 38305482632 terminó en éxito y analizó tres lenguajes/tipos de código. |
-| 7 | Corregir el workflow propio de CodeQL | PREPARADO EN ESTA RAMA | Se elimina la condición que podía omitir el job, se agrega ejecución manual y se amplían lenguajes. Requiere CI y ejecución real de la rama/PR. |
+| 7 | Resolver la duplicación de CodeQL | CORRECCIÓN EN ESTA RAMA | Se retiró el workflow avanzado duplicado tras verificar que GitHub rechaza su SARIF cuando está habilitado CodeQL predeterminado. Se conserva el análisis predeterminado de GitHub; validar nuevo run tras el cambio. |
 | 8 | Revisar alertas CodeQL | BLOQUEADO POR VERIFICACIÓN | El endpoint de alertas no quedó verificable desde esta auditoría; revisar en la interfaz de GitHub. |
 | 9 | Revisar puerta de producción y privacidad | HECHO | La puerta mantiene sesiones reales bloqueadas; el filtro de API no reemplaza el filtro local previo al envío. |
 | 10 | Registrar resultados y criterios de aceptación | HECHO | Este documento registra evidencia, límites y siguiente secuencia. |
 | 11 | Crear rama aislada de corrección | HECHO | Rama `audit/expansion-30-step-execution-2026-10-12`. |
 | 12 | Modificar CodeQL sin tocar `main` | HECHO EN RAMA | Commit inicial de cambio: `3928f08516aa1572d3ccaf6c285fc9c6f33eab96`. |
-| 13 | Ejecutar CI de la nueva rama | PENDIENTE | Debe pasar en el SHA exacto de la rama/PR. |
-| 14 | Confirmar que CodeQL deja de estar omitido | PENDIENTE | El job debe terminar en `success`, no solo aparecer en la lista de workflows. |
+| 13 | Ejecutar CI de la PR #35 | HECHO | [Run 38306227495](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38306227495) terminó en `success` en el SHA `de075f663a18a9d290c800cda505656b887b0426`. |
+| 14 | Diagnosticar CodeQL de la PR #35 | HECHO | El run 38306227059 falló al subir SARIF por coexistencia con CodeQL predeterminado; se retiró el workflow avanzado duplicado en esta rama. Falta comprobar el run posterior. |
 | 15 | Revisar hallazgos de CodeQL | PENDIENTE | Inspeccionar alertas, severidad, rutas de datos y falsos positivos. |
 | 16 | Revisar PR abiertas y evitar integración duplicada | HECHO | PR #28 está abierta; Dependabot #3 y #4 también están abiertas. Revisar conflictos antes de integrar. |
 | 17 | Validar acciones de CI fijadas por SHA | PARCIAL | CI y SAST fijan varias acciones; CodeQL en esta rama conserva referencias de versión y necesita decisión/pinning revisado. |
@@ -73,12 +74,12 @@ Los pasos distinguen inspección, cambio propuesto y validación real. “Prepar
 
 ### Fase F — cerrar el cambio de seguridad (31–36)
 
-31. Abrir PR desde esta rama hacia `main`, con el alcance y las limitaciones descritos.
-32. Ejecutar CI y comprobar sintaxis/validación del workflow en el SHA exacto de la PR.
-33. Confirmar que CodeQL analiza Python, JavaScript/TypeScript y GitHub Actions sin quedar omitido.
-34. Revisar las alertas CodeQL; clasificar cada una como confirmada, falso positivo o pendiente de análisis, dejando evidencia.
-35. Revisar artefactos JSON de Semgrep/Trivy y ejecutar pruebas controladas que demuestren que los escáneres detectan hallazgos de laboratorio.
-36. Resolver conflictos y revisar PR #28 y Dependabot #3/#4 antes de integrar cambios solapados; no fusionar solo por tener CI verde.
+31. PR #35 creada como borrador; mantenerla abierta hasta cerrar las verificaciones.
+32. CI de PR #35 terminó en `success` en SHA `de075f663a18a9d290c800cda505656b887b0426`; al borrar el workflow duplicado, repetir la comprobación en el nuevo SHA.
+33. Diagnóstico completado: el workflow avanzado generó SARIF pero la carga falló porque CodeQL predeterminado está habilitado; se eliminó el workflow duplicado en la rama. Verificar el análisis automático posterior.
+34. Pendiente: revisar alertas de CodeQL en la interfaz de GitHub; no se ha confirmado cantidad ni severidad.
+35. SAST de PR #35 terminó en éxito ([run 38306227108](https://github.com/constelacionesexistenciales-ofc/XIL-AC/actions/runs/38306227108)); revisar informes/artefactos y demostrar detección controlada aún pendiente.
+36. Pendiente: revisar PR #28 y Dependabot #3/#4, resolver solapamientos y no fusionar solo por CI verde.
 
 ### Fase G — reproducibilidad y cadena de suministro (37–42)
 
@@ -121,3 +122,21 @@ Los pasos distinguen inspección, cambio propuesto y validación real. “Prepar
 Prioridad recomendada: **seguridad reproducible → privacidad previa al envío → servicios reales de prueba → evaluación de calidad → preproducción privada → aprobación humana**.
 
 No abrir 30 frentes de código simultáneos. Avanzar por bloques pequeños, con una PR por cambio coherente, CI en el SHA exacto y evidencia verificable. No habilitar sesiones reales ni enviar transcripciones a proveedores remotos mientras la Puerta de Producción permanezca cerrada.
+
+
+## 5. Registro incremental de ejecución del plan 31–60
+
+### Hechos verificados en esta continuación
+
+- [x] Paso 31: PR #35 abierta como borrador.
+- [x] Paso 32 (primera ejecución): CI de PR #35 pasó en SHA `de075f663a18a9d290c800cda505656b887b0426`; debe repetirse tras el último commit.
+- [x] Paso 33 (diagnóstico): logs de CodeQL mostraron un error de configuración, no un fallo de extracción: “CodeQL analyses from advanced configurations cannot be processed when the default setup is enabled”.
+- [x] Decisión de arquitectura: usar la configuración predeterminada de CodeQL de GitHub como fuente única y retirar el workflow avanzado duplicado en la rama.
+- [x] Paso 35 (primera ejecución): SAST alternativo pasó en PR #35; el contenido de sus informes todavía no fue inspeccionado.
+- [ ] Paso 34: revisión manual de alertas CodeQL.
+- [ ] Paso 35: prueba de detección controlada y lectura de informes JSON.
+- [ ] Pasos 37–42: no afirmar lockfile, SBOM de imagen ni enforcement nuevo hasta generar y probar esos artefactos.
+- [ ] Pasos 43–48: matriz de amenazas y pruebas de configuración SSRF en desarrollo; no sustituyen pruebas de DNS/red reales.
+- [ ] Pasos 49–60: requieren servicios, secretos, infraestructura y/o aprobación humana; continúan bloqueados hasta configurar y validar el entorno.
+
+La eliminación del workflow avanzado está en la rama de la PR, no en `main`. No se han habilitado sesiones reales ni se ha aprobado la Puerta de Producción.
