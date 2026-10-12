@@ -80,6 +80,55 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+  container-image-security:
+    name: Container image scan and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Build local image
+        id: build
+        run: docker build --pull -t xilac-ci:${GITHUB_SHA} .
+
+      - name: Generate container SBOM (CycloneDX)
+        if: steps.build.outcome == 'success'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.74.0
+          scan-type: image
+          image-ref: xilac-ci:${{ github.sha }}
+          format: cyclonedx
+          output: sbom-container.cdx.json
+          scanners: vuln
+
+      - name: Scan container image for high/critical risks
+        if: steps.build.outcome == 'success'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.74.0
+          scan-type: image
+          image-ref: xilac-ci:${{ github.sha }}
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          format: json
+          output: trivy-image-report.json
+          exit-code: "1"
+
+      - name: Upload image report and SBOM
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: xilac-container-sbom-and-trivy
+          path: |
+            sbom-container.cdx.json
+            trivy-image-report.json
+          if-no-files-found: warn
+          retention-days: 30
+
   trivy:
     name: Trivy filesystem security scan
     runs-on: ubuntu-latest
