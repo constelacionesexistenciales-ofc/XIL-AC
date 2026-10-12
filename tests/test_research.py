@@ -103,3 +103,76 @@ def test_redirect_handler_rejects_non_https_and_other_hosts():
     )
     assert insecure is None
     assert external is None
+
+
+def test_self_hosted_searxng_search_needs_no_brave_key(monkeypatch):
+    monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
+    monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
+    monkeypatch.setenv("SEARXNG_BASE_URL", "http://searxng:8080")
+    payload = {
+        "results": [
+            {
+                "title": "Primary source",
+                "url": "https://example.org/paper",
+                "content": "Research summary",
+                "publishedDate": "2026-09-20",
+            },
+            {
+                "title": "Unsafe result",
+                "url": "http://example.org/insecure",
+                "content": "Must be discarded",
+            },
+        ]
+    }
+    captured = {}
+    monkeypatch.setattr(
+        research,
+        "build_opener",
+        lambda *handlers: FakeOpener(payload, captured),
+    )
+
+    result = research.search_web("public research question", count=5)
+
+    assert result["provider"] == "self_hosted_searxng"
+    assert result["result_count"] == 1
+    assert result["results"][0]["title"] == "Primary source"
+    assert "format=json" in captured["url"]
+    assert captured["timeout"] == 8
+
+
+def test_self_hosted_searxng_rejects_remote_plain_http(monkeypatch):
+    monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
+    monkeypatch.setenv("SEARXNG_BASE_URL", "http://search.example.org")
+    with pytest.raises(research.ResearchProviderNotConfigured):
+        research.search_web("public research question")
+
+
+def test_self_hosted_searxng_rejects_unknown_backend(monkeypatch):
+    monkeypatch.setenv("RESEARCH_BACKEND", "unknown")
+    with pytest.raises(research.ResearchProviderNotConfigured):
+        research.search_web("public research question")
+
+
+def test_self_hosted_redirect_handler_rejects_cross_origin():
+    handler = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    request = research.Request("http://searxng:8080/search")
+    rejected = handler.redirect_request(
+        request, None, 302, "Found", {}, "http://other-service:8080/search"
+    )
+    assert rejected is None
+
+
+def test_self_hosted_searxng_rejects_invalid_port(monkeypatch):
+    monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
+    monkeypatch.setenv("SEARXNG_BASE_URL", "http://searxng:not-a-port")
+    with pytest.raises(research.ResearchProviderNotConfigured):
+        research.search_web("public research question")
+
+
+def test_self_hosted_redirect_handler_rejects_invalid_port():
+    handler = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    request = research.Request("http://searxng:8080/search")
+    rejected = handler.redirect_request(
+        request, None, 302, "Found", {}, "http://searxng:not-a-port/search"
+    )
+    assert rejected is None

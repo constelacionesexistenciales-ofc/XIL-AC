@@ -1,0 +1,19 @@
+services:
+  searxng:
+    # Para producción, sustituir latest por una versión/digest revisado y fijado.
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Set SEARXNG_SECRET in .env}
+      SEARXNG_BASE_URL: http://searxng:8080/
+    volumes:
+      - searxng_config:/etc/searxng
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - default
+
+volumes:
+  searxng_config:
