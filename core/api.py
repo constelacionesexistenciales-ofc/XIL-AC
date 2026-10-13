@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from uuid import UUID
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -25,6 +26,14 @@ from core.research import (
     search_web,
 )
 from core.trace import new_trace
+from core.session_movement import (
+    SessionMovementError,
+    SessionStart,
+    SnapshotInput,
+    add_snapshot,
+    create_session,
+    get_session,
+)
 
 settings = Settings()
 PRIVACY_WARNING = (
@@ -131,6 +140,95 @@ def process(
         },
     )
 
+
+
+class SessionMovementSnapshotRequest(SnapshotInput):
+    """Puntuación mínima de llegada, durante o cierre; nunca recibe texto de sesión."""
+
+
+def _session_movement_gate() -> None:
+    if not settings.session_movement_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail={
+                "status": "temporarily_blocked",
+                "code": "SESSION_MOVEMENT_DISABLED",
+                "notice": (
+                    "El indicador de movimiento está desactivado. Habilitalo solo en un "
+                    "entorno autorizado después de aplicar la migración y verificar la Puerta "
+                    "de Producción. No envíes datos reales de consultantes."
+                ),
+            },
+        )
+
+
+@app.post("/v1/session-movement/sessions", status_code=status.HTTP_201_CREATED)
+def session_movement_start(
+    request: SessionStart,
+    principal: Principal = Depends(require_roles("facilitator", "admin")),
+) -> JSONResponse:
+    _session_movement_gate()
+    trace = new_trace()
+    try:
+        record_audit_event(
+            trace.execution_id, "session_movement.create", principal.subject, "requested"
+        )
+        result = create_session(principal.subject, request.objective)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo crear el registro de movimiento de sesión.",
+        ) from None
+    return JSONResponse(status_code=201, content={**result, "execution_id": trace.execution_id})
+
+
+@app.post("/v1/session-movement/sessions/{session_id}/snapshots", status_code=status.HTTP_201_CREATED)
+def session_movement_snapshot(
+    session_id: UUID,
+    request: SnapshotInput,
+    principal: Principal = Depends(require_roles("facilitator", "admin")),
+) -> JSONResponse:
+    _session_movement_gate()
+    trace = new_trace()
+    try:
+        record_audit_event(
+            trace.execution_id, "session_movement.snapshot", principal.subject, "requested"
+        )
+        result = add_snapshot(principal.subject, session_id, request)
+    except SessionMovementError as exc:
+        code = str(exc)
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if code == "session_not_found"
+            else status.HTTP_409_CONFLICT
+        )
+        raise HTTPException(status_code=status_code, detail=code) from None
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo guardar la medición. No se devolvieron puntuaciones.",
+        ) from None
+    return JSONResponse(status_code=201, content={**result, "execution_id": trace.execution_id})
+
+
+@app.get("/v1/session-movement/sessions/{session_id}")
+def session_movement_report(
+    session_id: UUID,
+    principal: Principal = Depends(require_roles("facilitator", "admin")),
+) -> dict:
+    _session_movement_gate()
+    try:
+        return get_session(principal.subject, session_id)
+    except SessionMovementError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No se encontró el registro para este usuario.",
+        ) from None
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo recuperar el resumen del movimiento.",
+        ) from None
 
 
 class ResearchRequest(BaseModel):
@@ -275,3 +373,11 @@ def research(
 _UI_DIRECTORY = Path(__file__).resolve().parent.parent / "frontend" / "universal-research"
 if _UI_DIRECTORY.is_dir():
     app.mount("/research-ui", StaticFiles(directory=_UI_DIRECTORY, html=True), name="research-ui")
+
+_SESSION_MOVEMENT_UI = Path(__file__).resolve().parent.parent / "frontend" / "session-movement"
+if _SESSION_MOVEMENT_UI.is_dir():
+    app.mount(
+        "/session-movement",
+        StaticFiles(directory=_SESSION_MOVEMENT_UI, html=True),
+        name="session-movement",
+    )
