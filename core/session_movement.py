@@ -137,13 +137,28 @@ def _report_block(objective: str, status: str, snapshots: list[dict], delta: dic
         "vitality_energy": "Vitalidad percibida",
         "coping_availability": "Disponibilidad para afrontar",
     }
+    objective_labels = {
+        "stabilization": "Estabilización y cuidado del momento",
+        "availability": "Construir disponibilidad interna",
+        "exploration": "Explorar y diferenciar la experiencia",
+        "integration": "Integrar lo reconocido",
+        "action": "Ampliar posibilidades de acción",
+        "other": "Objetivo contextual",
+    }
+    source_labels = {
+        "consultante_self_report": "autorreporte del consultante",
+        "facilitator_observation": "observación del facilitador",
+        "jointly_reviewed": "revisión conjunta",
+    }
     arrival = next((item for item in snapshots if item["phase"] == "arrival"), None)
     closing = next((item for item in snapshots if item["phase"] == "closing"), None)
     lines = [
         "MOVIMIENTO DURANTE EL ENCUENTRO",
-        f"Objetivo contextual: {objective}",
-        f"Estado del registro: {status}",
+        f"Objetivo contextual: {objective_labels.get(objective, objective)}",
+        f"Estado del registro: {'Cerrado' if status == 'closed' else 'En curso'}",
         f"Observaciones intermedias: {sum(item['phase'] == 'during' for item in snapshots)}",
+        f"Fuente de llegada: {source_labels.get(arrival['source'], 'no registrada') if arrival else 'no registrada'}",
+        f"Fuente de cierre: {source_labels.get(closing['source'], 'no registrada') if closing else 'no registrada'}",
     ]
     for key, label in labels.items():
         before = arrival["scores"].get(key) if arrival else None
