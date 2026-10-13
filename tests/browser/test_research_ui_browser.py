@@ -68,6 +68,7 @@ def test_sensitive_query_is_blocked_before_network_request():
         page.route("**/v1/research", record_request)
         page.locator("#researchQuestion").fill("consultante: María Pérez")
         page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#confirmPublicQuery").check()
         page.locator("#researchForm button[type=submit]").click()
         expect(page.locator("#summaryText")).to_contain_text(
             "no se envió a la API"
@@ -91,6 +92,7 @@ def test_provider_failure_does_not_show_fake_results():
         )
         page.locator("#researchQuestion").fill("Fuentes sobre búsqueda abierta")
         page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#confirmPublicQuery").check()
         page.locator("#researchForm button[type=submit]").click()
         expect(page.locator("#resultTitle")).to_have_text(
             "No se pudo completar la búsqueda"
