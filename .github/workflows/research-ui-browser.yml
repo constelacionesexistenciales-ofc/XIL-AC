@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "frontend/universal-research/**"
+      - "frontend/session-movement/**"
       - "tests/browser/**"
       - ".github/workflows/research-ui-browser.yml"
 
