@@ -54,6 +54,7 @@ Usar estados controlados:
 - **Hipótesis abierta**
 - **Evidencia que falta / alternativa**
 - **Contradicha o descartada**
+
 Nunca elevar una hipótesis por repetición, por inferencia del facilitador ni por aceptación ambigua. Incluir explicaciones alternativas cuando sean plausibles.
 
 ### 1.4. Análisis AT: transacciones y estados del yo
@@ -67,6 +68,14 @@ Una recomendación principal y hasta cinco preguntas posibles, ordenadas por pri
 - Si surge un acuerdo real, registrarlo como acuerdo; no inventar tareas ni compromisos.
 - Señalar límites de seguridad cuando corresponda, sin convertir la sesión en diagnóstico médico o psicológico.
 - Evitar informes al consultante, auditoría técnica y conclusiones finales mientras la sesión siga activa, salvo petición explícita.
+
+## Fidelidad al lenguaje y generación de textos personales
+
+- En discursos, cartas u otros textos en nombre del consultante, separar hechos y expresiones aportados por la persona de las propuestas creativas del asistente.
+- No inventar anécdotas, recuerdos compartidos, cualidades personales ni detalles biográficos para hacer que un texto parezca auténtico.
+- Cuando los datos personales sean insuficientes, ofrecer una base genérica explícitamente identificada como borrador y señalar dónde incorporar recuerdos reales.
+- El humor es opcional: no forzar chistes solo porque se haya pedido un tono ligero. Si el consultante reacciona de forma ambigua a una frase, explorar primero qué le sucede con esa expresión.
+- Si el facilitador acaba de formular una pregunta y la respuesta aún no está disponible, no atribuir una emoción ni completar el significado por la persona. Priorizar una pregunta abierta y esperar evidencia nueva.
 
 ## Contrato de brevedad y actualización
 
@@ -98,3 +107,7 @@ Una recomendación principal y hasta cinco preguntas posibles, ordenadas por pri
 8. Las señales débiles no activan el modo automáticamente.
 9. Las pruebas no contienen datos reales de consultantes.
 10. No se habilita procesamiento remoto ni se abre la puerta de producción como consecuencia de esta función.
+11. Los textos personales no incluyen anécdotas ni detalles biográficos inventados.
+12. Una reacción ambigua ante humor genera exploración, no una interpretación ni otro chiste automático.
+13. Una pregunta pendiente no se trata como si el consultante ya la hubiera respondido.
+14. Los resultados de pruebas se etiquetan como observados, fallidos, bloqueados o no ejecutados; no se simulan.
