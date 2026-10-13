@@ -79,6 +79,36 @@ def test_sensitive_query_is_blocked_before_network_request():
         playwright.stop()
 
 
+def test_session_material_phrases_are_blocked_before_network_request():
+    playwright, browser, page = open_page()
+    requests = []
+
+    def record_request(route):
+        requests.append(route.request.url)
+        route.abort()
+
+    phrases = [
+        "transcripción de la sesión",
+        "informe para el consultante",
+        "resumen de sesión del cliente",
+        "análisis de la sesión",
+    ]
+    try:
+        page.route("**/v1/research", record_request)
+        page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#confirmPublicQuery").check()
+        for phrase in phrases:
+            page.locator("#researchQuestion").fill(phrase)
+            page.locator("#researchForm button[type=submit]").click()
+            expect(page.locator("#summaryText")).to_contain_text(
+                "no se envió a la API"
+            )
+        assert requests == []
+    finally:
+        browser.close()
+        playwright.stop()
+
+
 def test_provider_failure_does_not_show_fake_results():
     playwright, browser, page = open_page()
     try:
