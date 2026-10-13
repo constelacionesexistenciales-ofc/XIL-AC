@@ -5,6 +5,7 @@ on:
     branches: [integration/research-ui-browser-rebased]
     paths:
       - "frontend/universal-research/**"
+      - "frontend/session-movement/**"
       - "tests/browser/**"
       - ".github/workflows/research-ui-browser.yml"
   pull_request:
@@ -43,6 +44,15 @@ jobs:
             sleep 1
           done
           cat /tmp/research-ui.log
+          exit 1
+      - name: Start static session movement UI
+        run: |
+          python -m http.server 4174 --directory frontend/session-movement > /tmp/session-movement-ui.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4174/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/session-movement-ui.log
           exit 1
       - name: Run browser tests
         run: pytest tests/browser -q
