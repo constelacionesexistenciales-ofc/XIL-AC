@@ -152,13 +152,19 @@ def _report_block(objective: str, status: str, snapshots: list[dict], delta: dic
     }
     arrival = next((item for item in snapshots if item["phase"] == "arrival"), None)
     closing = next((item for item in snapshots if item["phase"] == "closing"), None)
+    arrival_source = (
+        source_labels.get(arrival["source"], "no registrada") if arrival else "no registrada"
+    )
+    closing_source = (
+        source_labels.get(closing["source"], "no registrada") if closing else "no registrada"
+    )
     lines = [
         "MOVIMIENTO DURANTE EL ENCUENTRO",
         f"Objetivo contextual: {objective_labels.get(objective, objective)}",
         f"Estado del registro: {'Cerrado' if status == 'closed' else 'En curso'}",
         f"Observaciones intermedias: {sum(item['phase'] == 'during' for item in snapshots)}",
-        f"Fuente de llegada: {source_labels.get(arrival['source'], 'no registrada') if arrival else 'no registrada'}",
-        f"Fuente de cierre: {source_labels.get(closing['source'], 'no registrada') if closing else 'no registrada'}",
+        f"Fuente de llegada: {arrival_source}",
+        f"Fuente de cierre: {closing_source}",
     ]
     for key, label in labels.items():
         before = arrival["scores"].get(key) if arrival else None
@@ -167,7 +173,10 @@ def _report_block(objective: str, status: str, snapshots: list[dict], delta: dic
         before_text = "NE" if before is None else str(before)
         after_text = "NE" if after is None else str(after)
         change_text = "no evaluable" if change is None else f"{change:+d}"
-        lines.append(f"{label}: llegada {before_text}; cierre {after_text}; variación {change_text}.")
+        lines.append(
+            f"{label}: llegada {before_text}; cierre {after_text}; "
+            f"variación {change_text}."
+        )
     lines.append(
         "Interpretación: indicador descriptivo para revisión del facilitador; no es diagnóstico "
         "ni medida clínica validada. El cambio no demuestra causalidad; revisar contexto y fuente."
