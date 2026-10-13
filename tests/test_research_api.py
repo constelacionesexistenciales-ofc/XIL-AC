@@ -116,3 +116,23 @@ def test_research_requires_explicit_public_query_confirmation(monkeypatch):
     assert response.status_code == 423
     assert response.json()["code"] == "PUBLIC_RESEARCH_CONFIRMATION_REQUIRED"
     assert called == []
+
+def test_research_blocks_session_material_before_provider(monkeypatch):
+    headers = _auth(monkeypatch)
+    called = []
+    monkeypatch.setattr(api, "search_web", lambda *args: called.append(args))
+    queries = [
+        "Preparar un resumen de la " + "sesión con un consultante",
+        "Redactar el " + "informe de sesión para paciente",
+        "Analizar la " + "transcripción de la sesión",
+        "Preparar " + "notas de la sesión",
+    ]
+    for query in queries:
+        response = client.post(
+            "/v1/research",
+            headers=headers,
+            json={"query": query, "confirm_public_query": True},
+        )
+        assert response.status_code == 423, query
+        assert response.json()["code"] == "POSSIBLE_SENSITIVE_CONTENT", query
+    assert called == []
