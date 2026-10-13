@@ -1,5 +1,6 @@
 import os
 from uuid import UUID, uuid4
+
 import pytest
 
 from core.db import connection
@@ -35,7 +36,7 @@ def test_session_movement_persists_snapshots_and_isolates_owner(monkeypatch):
         )
         add_snapshot(
             actor,
-            __import__("uuid").UUID(session_id),
+            UUID(session_id),
             SnapshotInput(
                 phase=SnapshotPhase.DURING,
                 source=ScoreSource.FACILITATOR,
@@ -44,24 +45,24 @@ def test_session_movement_persists_snapshots_and_isolates_owner(monkeypatch):
         )
         add_snapshot(
             actor,
-            __import__("uuid").UUID(session_id),
+            UUID(session_id),
             SnapshotInput(
                 phase=SnapshotPhase.CLOSING,
                 source=ScoreSource.JOINT,
                 scores=ScoreSet(availability=3, vitality_energy=3, coping_availability=4),
             ),
         )
-        report = get_session(actor, __import__("uuid").UUID(session_id))
+        report = get_session(actor, UUID(session_id))
         assert report["status"] == "closed"
         assert report["delta"]["availability"] == 2
         assert report["delta"]["vitality_energy"] == 1
         assert report["delta"]["coping_availability"] == 3
         assert "MOVIMIENTO DURANTE EL ENCUENTRO" in report["report_block"]
         with pytest.raises(SessionMovementError, match="session_not_found"):
-            get_session(other_actor, __import__("uuid").UUID(session_id))
+            get_session(other_actor, UUID(session_id))
     finally:
         with connection() as conn:
             conn.execute(
                 "DELETE FROM session_movement_sessions WHERE session_id = %s",
-                (__import__("uuid").UUID(session_id),),
+                (UUID(session_id),),
             )
