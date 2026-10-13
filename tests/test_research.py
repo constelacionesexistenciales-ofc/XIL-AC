@@ -176,3 +176,67 @@ def test_self_hosted_redirect_handler_rejects_invalid_port():
         request, None, 302, "Found", {}, "http://searxng:not-a-port/search"
     )
     assert rejected is None
+
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://127.0.0.1/metadata",
+        "https://[::1]/metadata",
+        "https://169.254.169.254/latest/meta-data",
+        "https://api.search.brave.com:8443/search",
+        "https://user:placeholder@api.search.brave.com/search",
+        "https://api.search.brave.com/search#fragment",
+        "http://api.search.brave.com/search",
+    ],
+)
+def test_brave_redirect_handler_rejects_untrusted_destinations(target):
+    handler = research._HTTPSProviderRedirectHandler()
+    request = research.Request("https://api.search.brave.com/res/v1/web/search")
+    rejected = handler.redirect_request(request, None, 302, "Found", {}, target)
+    assert rejected is None
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "http://127.0.0.1:8080/metadata",
+        "http://[::1]:8080/metadata",
+        "http://169.254.169.254/latest/meta-data",
+        "http://other-service:8080/search",
+        "http://searxng:8081/search",
+        "http://user:placeholder@searxng:8080/search",
+        "http://searxng:8080/search#fragment",
+        "https://searxng:8080/search",
+    ],
+)
+def test_searxng_redirect_handler_rejects_untrusted_destinations(target):
+    handler = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    request = research.Request("http://searxng:8080/search")
+    rejected = handler.redirect_request(request, None, 302, "Found", {}, target)
+    assert rejected is None
+
+
+def test_redirect_handlers_allow_clean_same_origin_targets():
+    brave = research._HTTPSProviderRedirectHandler()
+    brave_request = research.Request("https://api.search.brave.com/search")
+    assert brave.redirect_request(
+        brave_request,
+        None,
+        302,
+        "Found",
+        {},
+        "https://api.search.brave.com/res/v1/web/search?page=2",
+    ) is not None
+
+    searxng = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    searxng_request = research.Request("http://searxng:8080/search")
+    assert searxng.redirect_request(
+        searxng_request,
+        None,
+        302,
+        "Found",
+        {},
+        "http://searxng:8080/search?page=2",
+    ) is not None
