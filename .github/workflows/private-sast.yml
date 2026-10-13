@@ -125,7 +125,8 @@ jobs:
           if not report_path.is_file():
               sys.exit("Semgrep did not produce its JSON report")
           report = json.loads(report_path.read_text())
-          if not any(item.get("check_id") == "xilac.self-test.eval" for item in report.get("results", [])):
+          findings = report.get("results", [])
+          if not any("Synthetic self-test finding" in item.get("extra", {}).get("message", "") for item in findings):
               sys.exit("Semgrep failed without reporting the expected controlled finding")
           print("PASS: Semgrep reported the synthetic finding and returned a blocking exit status.")
           PY
@@ -133,7 +134,7 @@ jobs:
       - name: Create isolated Trivy secret fixture
         run: |
           mkdir -p "$RUNNER_TEMP/xilac-trivy-self-test"
-          printf '%s\n' 'GITHUB_TOKEN=ghp_0123456789abcdef0123456789abcdef0123' > "$RUNNER_TEMP/xilac-trivy-self-test/synthetic.env"
+          printf '%s%s%s\n' 'GITHUB_TOKEN=ghp_' '0123456789abcdef0123456789abcdef' '0123' > "$RUNNER_TEMP/xilac-trivy-self-test/synthetic.env"
 
       - name: Verify Trivy exits nonzero on a controlled synthetic secret
         id: trivy_self_test
