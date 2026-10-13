@@ -74,3 +74,96 @@ jobs:
           path: trivy-report.json
           if-no-files-found: warn
           retention-days: 30
+  scanner-gate-self-test:
+    name: Scanner gate self-test (synthetic findings)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: python -m pip install "semgrep==1.180.0"
+
+      - name: Create isolated Semgrep test fixture and rule
+        run: |
+          mkdir -p "$RUNNER_TEMP/xilac-semgrep-self-test"
+          cat > "$RUNNER_TEMP/xilac-semgrep-self-test/fixture.py" <<'PY'
+          user_input = input("synthetic input: ")
+          eval(user_input)
+          PY
+          cat > "$RUNNER_TEMP/xilac-semgrep-self-test/rule.yml" <<'YAML'
+          rules:
+            - id: xilac.self-test.eval
+              languages: [python]
+              severity: ERROR
+              message: Synthetic self-test finding; never use eval on untrusted input.
+              pattern: eval(...)
+          YAML
+
+      - name: Verify Semgrep exits nonzero on a controlled finding
+        id: semgrep_self_test
+        continue-on-error: true
+        run: |
+          semgrep scan --config "$RUNNER_TEMP/xilac-semgrep-self-test/rule.yml" --json --output "$RUNNER_TEMP/xilac-semgrep-self-test/report.json" --error "$RUNNER_TEMP/xilac-semgrep-self-test/fixture.py"
+
+      - name: Assert Semgrep detected the fixture and activated the gate
+        if: always()
+        env:
+          SCANNER_OUTCOME: ${{ steps.semgrep_self_test.outcome }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, sys
+          report_path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "xilac-semgrep-self-test" / "report.json"
+          if os.environ.get("SCANNER_OUTCOME") != "failure":
+              sys.exit("Semgrep self-test did not fail on the controlled finding")
+          if not report_path.is_file():
+              sys.exit("Semgrep did not produce its JSON report")
+          report = json.loads(report_path.read_text())
+          if not any(item.get("check_id") == "xilac.self-test.eval" for item in report.get("results", [])):
+              sys.exit("Semgrep failed without reporting the expected controlled finding")
+          print("PASS: Semgrep reported the synthetic finding and returned a blocking exit status.")
+          PY
+
+      - name: Create isolated Trivy secret fixture
+        run: |
+          mkdir -p "$RUNNER_TEMP/xilac-trivy-self-test"
+          printf '%s\n' 'GITHUB_TOKEN=ghp_0123456789abcdef0123456789abcdef0123' > "$RUNNER_TEMP/xilac-trivy-self-test/synthetic.env"
+
+      - name: Verify Trivy exits nonzero on a controlled synthetic secret
+        id: trivy_self_test
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.74.0
+          scan-type: fs
+          scan-ref: ${{ runner.temp }}/xilac-trivy-self-test
+          scanners: secret
+          severity: HIGH,CRITICAL
+          format: json
+          output: trivy-self-test-report.json
+          exit-code: "1"
+
+      - name: Assert Trivy detected the synthetic secret and activated the gate
+        if: always()
+        env:
+          SCANNER_OUTCOME: ${{ steps.trivy_self_test.outcome }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, sys
+          report_path = pathlib.Path("trivy-self-test-report.json")
+          if os.environ.get("SCANNER_OUTCOME") != "failure":
+              sys.exit("Trivy self-test did not fail on the controlled synthetic secret")
+          if not report_path.is_file():
+              sys.exit("Trivy did not produce its JSON report")
+          report = json.loads(report_path.read_text())
+          findings = [secret for result in report.get("Results", []) for secret in result.get("Secrets", [])]
+          if not findings:
+              sys.exit("Trivy failed without reporting the expected controlled secret")
+          print("PASS: Trivy reported the synthetic secret and returned a blocking exit status.")
+          PY
