@@ -39,7 +39,11 @@ def test_research_blocks_when_audit_fails(monkeypatch):
     monkeypatch.setattr(api, "record_audit_event", fail_audit)
     called = []
     monkeypatch.setattr(api, "search_web", lambda *args: called.append(args))
-    response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation", "confirm_public_query": True})
+    response = client.post(
+        "/v1/research",
+        headers=headers,
+        json={"query": "climate adaptation", "confirm_public_query": True},
+    )
     assert response.status_code == 503
     assert called == []
 
@@ -80,7 +84,15 @@ def test_research_success_returns_trace_and_disclaims_synthesis(monkeypatch):
             ],
         },
     )
-    response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation", "confirm_public_query": True, "domain": "science"})
+    response = client.post(
+        "/v1/research",
+        headers=headers,
+        json={
+            "query": "climate adaptation",
+            "confirm_public_query": True,
+            "domain": "science",
+        },
+    )
     assert response.status_code == 200
     body = response.json()
     assert body["execution_id"]
