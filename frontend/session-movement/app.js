@@ -248,13 +248,15 @@
         method: "POST",
         body: JSON.stringify({ phase: activePhase, source: source.value, scores: getScores() })
       });
-      measureStatus.textContent = "Registro guardado: " + data.phase + ".";
-      if (activePhase === "closing") {
+      const savedPhase = activePhase;
+      await loadReport();
+      if (savedPhase === "closing") {
         saveButton.disabled = true;
         measureStatus.textContent = "Cierre guardado. Ya podés copiar el bloque para el informe posterior.";
+      } else {
+        measureStatus.textContent = "Registro guardado: " + data.phase + ".";
+        setPhase("during");
       }
-      await loadReport();
-      if (activePhase !== "closing") setPhase(activePhase === "arrival" ? "during" : "during");
       notify("Medición guardada.");
     } catch (error) {
       measureStatus.textContent = error.message;
