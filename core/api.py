@@ -182,7 +182,10 @@ def session_movement_start(
     return JSONResponse(status_code=201, content={**result, "execution_id": trace.execution_id})
 
 
-@app.post("/v1/session-movement/sessions/{session_id}/snapshots", status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/v1/session-movement/sessions/{session_id}/snapshots",
+    status_code=status.HTTP_201_CREATED,
+)
 def session_movement_snapshot(
     session_id: UUID,
     request: SnapshotInput,
