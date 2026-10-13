@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 from datetime import datetime, timezone
@@ -22,6 +23,8 @@ class _HTTPSProviderRedirectHandler(HTTPRedirectHandler):
         if (
             parsed.scheme != "https"
             or parsed.hostname != "api.search.brave.com"
+            or parsed.username is not None
+            or parsed.password is not None
             or port not in (None, 443)
         ):
             return None
@@ -57,7 +60,11 @@ class _SameOriginRedirectHandler(HTTPRedirectHandler):
             port = parsed.port or (443 if parsed.scheme == "https" else 80)
         except ValueError:
             return None
-        if (parsed.scheme, parsed.hostname or "", port) != self._origin:
+        if (
+            parsed.username is not None
+            or parsed.password is not None
+            or (parsed.scheme, parsed.hostname or "", port) != self._origin
+        ):
             return None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
@@ -70,17 +77,41 @@ def _search_searxng(query: str, count: int) -> dict:
         configured_port = parsed_base.port
     except ValueError:
         raise ResearchProviderNotConfigured from None
+    hostname = (parsed_base.hostname or "").lower()
     if (
         parsed_base.scheme not in {"http", "https"}
-        or not parsed_base.hostname
-        or parsed_base.username
-        or parsed_base.password
+        or not hostname
+        or parsed_base.username is not None
+        or parsed_base.password is not None
         or parsed_base.query
         or parsed_base.fragment
         or (
             parsed_base.scheme == "http"
-            and parsed_base.hostname not in {"searxng", "localhost", "127.0.0.1"}
+            and hostname not in {"searxng", "localhost", "127.0.0.1"}
         )
+        or (
+            parsed_base.scheme == "https"
+            and hostname in {"localhost", "searxng"}
+        )
+    ):
+        raise ResearchProviderNotConfigured
+
+    # Reject non-public IP literals before opening a socket. The one explicit
+    # loopback exception is the documented local-development endpoint.
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        address = None
+    if address is not None and not address.is_global:
+        if not (
+            parsed_base.scheme == "http"
+            and address == ipaddress.IPv4Address("127.0.0.1")
+        ):
+            raise ResearchProviderNotConfigured
+
+    # Special-use DNS names must not be used as HTTPS provider endpoints.
+    if parsed_base.scheme == "https" and hostname.endswith(
+        (".localhost", ".local", ".internal", ".test", ".invalid", ".example")
     ):
         raise ResearchProviderNotConfigured
 

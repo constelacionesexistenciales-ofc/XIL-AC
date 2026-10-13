@@ -1,13 +1,18 @@
-FROM python:3.12-slim
+FROM python:3.12-alpine@sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4
+
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
-RUN addgroup --system xilac && adduser --system --ingroup xilac xilac
+
+RUN addgroup -S xilac && adduser -S -G xilac xilac
+
 COPY pyproject.toml README.md ./
 COPY core ./core
 COPY frontend ./frontend
 COPY migrations ./migrations
 COPY scripts ./scripts
+
 RUN pip install --no-cache-dir .
+
 USER xilac
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2)"
