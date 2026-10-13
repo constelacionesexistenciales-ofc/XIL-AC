@@ -157,7 +157,7 @@ def _report_block(objective: str, status: str, snapshots: list[dict], delta: dic
         "Interpretación: indicador descriptivo para revisión del facilitador; no es diagnóstico "
         "ni medida clínica validada. El cambio no demuestra causalidad; revisar contexto y fuente."
     )
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 
 def get_session(actor_id: str, session_id: UUID) -> dict:
