@@ -40,6 +40,7 @@ def test_search_renders_results_and_safe_links():
         )
         page.locator("#researchQuestion").fill("Comparar dos tecnologías de búsqueda")
         page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#confirmPublicQuery").check()
         page.locator("#researchForm button[type=submit]").click()
         expect(page.locator("#resultTitle")).to_have_text(
             "Comparar dos tecnologías de búsqueda"
@@ -67,6 +68,7 @@ def test_sensitive_query_is_blocked_before_network_request():
         page.route("**/v1/research", record_request)
         page.locator("#researchQuestion").fill("consultante: María Pérez")
         page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#confirmPublicQuery").check()
         page.locator("#researchForm button[type=submit]").click()
         expect(page.locator("#summaryText")).to_contain_text(
             "no se envió a la API"
@@ -90,6 +92,7 @@ def test_provider_failure_does_not_show_fake_results():
         )
         page.locator("#researchQuestion").fill("Fuentes sobre búsqueda abierta")
         page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#confirmPublicQuery").check()
         page.locator("#researchForm button[type=submit]").click()
         expect(page.locator("#resultTitle")).to_have_text(
             "No se pudo completar la búsqueda"
@@ -116,6 +119,26 @@ def test_responsive_layout_has_no_horizontal_document_overflow():
             assert dimensions["content"] <= dimensions["viewport"], (
                 f"Horizontal overflow at {width}px: {dimensions}"
             )
+    finally:
+        browser.close()
+        playwright.stop()
+
+
+def test_public_research_confirmation_is_required_before_network_request():
+    playwright, browser, page = open_page()
+    requests = []
+
+    def record_request(route):
+        requests.append(route.request.url)
+        route.abort()
+
+    try:
+        page.route("**/v1/research", record_request)
+        page.locator("#researchQuestion").fill("Fuentes sobre búsqueda abierta")
+        page.locator("#accessToken").fill("test-token-not-a-real-secret")
+        page.locator("#researchForm button[type=submit]").click()
+        assert requests == []
+        expect(page.locator("#confirmPublicQuery")).not_to_be_checked()
     finally:
         browser.close()
         playwright.stop()

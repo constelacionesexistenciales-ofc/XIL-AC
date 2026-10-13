@@ -17,7 +17,7 @@ def test_research_rate_limit_returns_429_and_retry_after(monkeypatch):
     response = client.post(
         "/v1/research",
         headers={"Authorization": "Bearer test-rate-limit-token"},
-        json={"query": "climate adaptation"},
+        json={"query": "climate adaptation", "confirm_public_query": True},
     )
     assert response.status_code == 429
     assert response.headers["Retry-After"] == "17"
@@ -38,7 +38,7 @@ def test_research_rate_limit_storage_failure_blocks_provider(monkeypatch):
     response = client.post(
         "/v1/research",
         headers={"Authorization": "Bearer test-rate-limit-token"},
-        json={"query": "climate adaptation"},
+        json={"query": "climate adaptation", "confirm_public_query": True},
     )
     assert response.status_code == 503
     assert provider_calls == []

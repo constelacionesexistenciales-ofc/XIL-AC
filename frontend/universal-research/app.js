@@ -5,6 +5,7 @@
   const question = document.querySelector("#researchQuestion");
   const accessToken = document.querySelector("#accessToken");
   const domain = document.querySelector("#domain");
+  const publicConfirmation = document.querySelector("#confirmPublicQuery");
   const resultTitle = document.querySelector("#resultTitle");
   const summaryText = document.querySelector("#summaryText");
   const results = document.querySelector("#results");
@@ -156,7 +157,7 @@
           "Content-Type": "application/json",
           "Authorization": "Bearer " + token
         },
-        body: JSON.stringify({ query, count: 5, domain: domain.value })
+        body: JSON.stringify({ query, count: 5, domain: domain.value, confirm_public_query: publicConfirmation.checked })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -195,6 +196,7 @@
 
   document.querySelector("#newResearch").addEventListener("click", () => {
     question.value = "";
+    publicConfirmation.checked = false;
     resultTitle.textContent = "Preparado para investigar";
     summaryText.textContent = "Ingresá tu pregunta y un token autorizado. La búsqueda consultará el proveedor configurado y mostrará enlaces reales. La síntesis automática aún no está conectada.";
     document.querySelector(".summary-card .card-kicker").textContent = "ESTADO DE LA INVESTIGACIÓN";
