@@ -173,7 +173,7 @@ _RESEARCH_PERSONAL_CONTEXT_RULES: tuple[tuple[str, str], ...] = (
         "informacion_de_alta_sensibilidad",
         r"\b(?:quiero quitarme la vida|quiero hacerme daño|voy a hacerme daño|"
         r"fui víctima de|me abusaron|me agredieron|sufrí abuso|sufrí violencia)\b",
-    ),,
+    ),
     (
         "contenido_de_sesion",
         r"\b(?:transcripci[oó]n|registro literal|informe|resumen|an[aá]lisis)\s+"
