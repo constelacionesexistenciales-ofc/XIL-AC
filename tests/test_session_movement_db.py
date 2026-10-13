@@ -1,6 +1,5 @@
 import os
-from uuid import uuid4
-
+from uuid import UUID, uuid4
 import pytest
 
 from core.db import connection
@@ -27,7 +26,7 @@ def test_session_movement_persists_snapshots_and_isolates_owner(monkeypatch):
     try:
         add_snapshot(
             actor,
-            __import__("uuid").UUID(session_id),
+            UUID(session_id),
             SnapshotInput(
                 phase=SnapshotPhase.ARRIVAL,
                 source=ScoreSource.JOINT,
