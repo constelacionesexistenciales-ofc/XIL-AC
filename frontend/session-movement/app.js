@@ -98,10 +98,17 @@
     emptyReport.hidden = true;
     reportContent.hidden = false;
     reportSummary.replaceChildren();
+    const vitalityDelta = data.delta ? data.delta.vitality_energy : null;
+    const copingDelta = data.delta ? data.delta.coping_availability : null;
+    const formatDelta = (value) => value === null || value === undefined
+      ? "NE · no evaluable"
+      : (value > 0 ? "+" : "") + value + " puntos";
     const chips = [
       ["Objetivo", objectiveLabels[data.objective] || data.objective],
       ["Estado", data.status === "closed" ? "Cerrado" : "En curso"],
-      ["Registros", String(data.snapshots.length)]
+      ["Registros", String(data.snapshots.length)],
+      ["Variación de vitalidad", formatDelta(vitalityDelta)],
+      ["Disponibilidad para afrontar", formatDelta(copingDelta)]
     ];
     chips.forEach(([label, value]) => {
       const chip = document.createElement("div");
@@ -300,7 +307,7 @@
   document.querySelector("#copyReport").addEventListener("click", async () => {
     if (!latestReport) return;
     try {
-      await navigator.clipboard.writeText(reportText(latestReport));
+      await navigator.clipboard.writeText(latestReport.report_block || reportText(latestReport));
       notify("Bloque de movimiento copiado para revisar e incorporar al informe.");
     } catch {
       notify("No se pudo copiar automáticamente. El resumen sigue visible en pantalla.");
