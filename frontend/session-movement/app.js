@@ -254,8 +254,8 @@
         saveButton.disabled = true;
         measureStatus.textContent = "Cierre guardado. Ya podés copiar el bloque para el informe posterior.";
       } else {
-        measureStatus.textContent = "Registro guardado: " + data.phase + ".";
         setPhase("during");
+        measureStatus.textContent = "Registro guardado: " + data.phase + ".";
       }
       notify("Medición guardada.");
     } catch (error) {
