@@ -174,6 +174,16 @@ _RESEARCH_PERSONAL_CONTEXT_RULES: tuple[tuple[str, str], ...] = (
         r"\b(?:quiero quitarme la vida|quiero hacerme daño|voy a hacerme daño|"
         r"fui víctima de|me abusaron|me agredieron|sufrí abuso|sufrí violencia)\b",
     ),
+    (
+        "contenido_de_sesion",
+        r"\b(?:transcripci[oó]n|registro literal|informe|resumen|an[aá]lisis)\s+"
+        r"(?:completo\s+)?(?:de\s+)?(?:la\s+)?(?:sesi[oó]n|consultante|paciente)\b",
+    ),
+    (
+        "contenido_de_sesion",
+        r"\b(?:nota|notas|devoluci[oó]n)\s+(?:de\s+)?(?:la\s+)?"
+        r"(?:sesi[oó]n|consultante|paciente)\b",
+    )
 )
 
 
