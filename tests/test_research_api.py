@@ -57,7 +57,11 @@ def test_research_provider_not_configured_fails_closed(monkeypatch):
         "search_web",
         lambda *args: (_ for _ in ()).throw(api.ResearchProviderNotConfigured()),
     )
-    response = client.post("/v1/research", headers=headers, json={"query": "climate adaptation", "confirm_public_query": True})
+    response = client.post(
+        "/v1/research",
+        headers=headers,
+        json={"query": "climate adaptation", "confirm_public_query": True},
+    )
     assert response.status_code == 503
 
 
