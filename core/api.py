@@ -140,6 +140,10 @@ class ResearchRequest(BaseModel):
         default="general",
         pattern="^(general|science|history|technology|business|education|cfe)$",
     )
+    confirm_public_query: bool = Field(
+        default=False,
+        description="Explicit confirmation that the query contains no session or client data.",
+    )
 
     @field_validator("query")
     @classmethod
@@ -166,6 +170,20 @@ def research(
                 "risk": finding.risk,
                 "categories": list(finding.categories),
                 "notice": PRIVACY_WARNING,
+            },
+        )
+
+    if not request.confirm_public_query:
+        return JSONResponse(
+            status_code=423,
+            content={
+                "status": "confirmation_required",
+                "code": "PUBLIC_RESEARCH_CONFIRMATION_REQUIRED",
+                "notice": (
+                    "Confirmá que la consulta es exclusivamente de investigación pública "
+                    "y que no contiene transcripciones, datos personales ni información "
+                    "de consultantes. Esta confirmación no garantiza anonimización."
+                ),
             },
         )
 
@@ -204,7 +222,7 @@ def research(
         ) from None
 
     try:
-        result = search_web(request.query, request.count)
+        result = search_web(request.query, request.count, request.domain)
     except ResearchProviderNotConfigured:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
