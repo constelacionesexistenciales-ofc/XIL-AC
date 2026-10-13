@@ -25,7 +25,11 @@ def open_page():
 def test_session_indicator_explains_ne_and_has_no_case_text_field():
     playwright, browser, page = open_page()
     try:
-        expect(page.get_by_role("heading", name="Observar el movimiento, no completar una lista.")).to_be_visible()
+        expect(
+            page.get_by_role(
+                "heading", name="Observar el movimiento, no completar una lista."
+            )
+        ).to_be_visible()
         expect(page.locator("#token")).to_be_visible()
         expect(page.locator("textarea")).to_have_count(0)
         expect(page.locator("[data-metric]")).to_have_count(6)
@@ -67,7 +71,9 @@ def test_live_capture_and_post_session_report_use_server_data():
             route.fulfill(
                 status=201,
                 content_type="application/json",
-                body=json.dumps({"snapshot_id": snapshots[-1]["snapshot_id"], "phase": item["phase"]}),
+                body=json.dumps(
+                    {"snapshot_id": snapshots[-1]["snapshot_id"], "phase": item["phase"]}
+                ),
             )
             return
         if request.method == "GET" and path == "/" + SESSION_ID:
@@ -92,7 +98,9 @@ def test_live_capture_and_post_session_report_use_server_data():
                     "closed_at": "2026-10-13T12:50:00+00:00" if closing else None,
                     "snapshots": snapshots,
                     "delta": delta,
-                    "interpretation_notice": "Indicadores descriptivos; no son diagnóstico ni medida clínica validada.",
+                    "interpretation_notice": (
+                        "Indicadores descriptivos; no son diagnóstico ni medida clínica validada."
+                    ),
                     "report_block": "MOVIMIENTO DURANTE EL ENCUENTRO",
                 }),
             )
