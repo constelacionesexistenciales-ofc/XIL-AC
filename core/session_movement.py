@@ -128,6 +128,38 @@ def add_snapshot(actor_id: str, session_id: UUID, item: SnapshotInput) -> dict:
             "scores": scores, "created_at": now.isoformat()}
 
 
+def _report_block(objective: str, status: str, snapshots: list[dict], delta: dict | None) -> str:
+    labels = {
+        "availability": "Disponibilidad interna",
+        "action_capacity": "Capacidad de acción",
+        "integration_capacity": "Capacidad integradora",
+        "phenomenological_movement": "Movimiento fenomenológico",
+        "vitality_energy": "Vitalidad percibida",
+        "coping_availability": "Disponibilidad para afrontar",
+    }
+    arrival = next((item for item in snapshots if item["phase"] == "arrival"), None)
+    closing = next((item for item in snapshots if item["phase"] == "closing"), None)
+    lines = [
+        "MOVIMIENTO DURANTE EL ENCUENTRO",
+        f"Objetivo contextual: {objective}",
+        f"Estado del registro: {status}",
+        f"Observaciones intermedias: {sum(item['phase'] == 'during' for item in snapshots)}",
+    ]
+    for key, label in labels.items():
+        before = arrival["scores"].get(key) if arrival else None
+        after = closing["scores"].get(key) if closing else None
+        change = delta.get(key) if delta else None
+        before_text = "NE" if before is None else str(before)
+        after_text = "NE" if after is None else str(after)
+        change_text = "no evaluable" if change is None else f"{change:+d}"
+        lines.append(f"{label}: llegada {before_text}; cierre {after_text}; variación {change_text}.")
+    lines.append(
+        "Interpretación: indicador descriptivo para revisión del facilitador; no es diagnóstico "
+        "ni medida clínica validada. El cambio no demuestra causalidad; revisar contexto y fuente."
+    )
+    return "\\n".join(lines)
+
+
 def get_session(actor_id: str, session_id: UUID) -> dict:
     with connection() as conn:
         session = conn.execute(
@@ -161,5 +193,9 @@ def get_session(actor_id: str, session_id: UUID) -> dict:
         "interpretation_notice": (
             "Indicadores descriptivos para revisión del facilitador; no son un diagnóstico "
             "ni una medida clínica validada. NE significa no evaluable."
+        ),
+        "report_block": _report_block(
+            session[0], "closed" if session[2] else "open", snapshots,
+            score_delta(arrival["scores"], closing["scores"]) if arrival and closing else None,
         ),
     }
