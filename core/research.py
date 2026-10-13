@@ -44,6 +44,26 @@ class ResearchRateLimited(ResearchError):
     pass
 
 
+_DOMAIN_HINTS = {
+    "science": "scientific research studies evidence",
+    "history": "historical sources archives primary sources",
+    "technology": "technical documentation engineering",
+    "business": "business industry market research",
+    "education": "education teaching learning research",
+    "cfe": "Constelaciones Familiares y Existenciales CFE",
+}
+
+
+def _query_for_domain(query: str, domain: str) -> str:
+    """Apply a bounded search hint for the selected research domain."""
+    if domain == "general":
+        return query
+    hint = _DOMAIN_HINTS.get(domain)
+    if hint is None:
+        raise ResearchProviderNotConfigured
+    return f"{query} {hint}"
+
+
 class _SameOriginRedirectHandler(HTTPRedirectHandler):
     """Allow redirects only to the configured search service origin."""
 
@@ -62,7 +82,7 @@ class _SameOriginRedirectHandler(HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _search_searxng(query: str, count: int) -> dict:
+def _search_searxng(query: str, count: int, domain: str = "general") -> dict:
     """Query an operator-controlled SearXNG instance; no API key is needed."""
     base_url = os.getenv("SEARXNG_BASE_URL", "http://searxng:8080").strip().rstrip("/")
     parsed_base = urlparse(base_url)
@@ -86,7 +106,8 @@ def _search_searxng(query: str, count: int) -> dict:
 
     port = configured_port or (443 if parsed_base.scheme == "https" else 80)
     origin = (parsed_base.scheme, parsed_base.hostname, port)
-    params = urlencode({"q": query, "format": "json", "language": "auto"})
+    provider_query = _query_for_domain(query, domain)
+    params = urlencode({"q": provider_query, "format": "json", "language": "auto"})
     request = Request(
         f"{base_url}/search?{params}",
         headers={"Accept": "application/json", "User-Agent": "XIL-AC-Research/0.5"},
@@ -141,13 +162,14 @@ def _search_searxng(query: str, count: int) -> dict:
     return {
         "provider": "self_hosted_searxng",
         "query": query,
+        "domain": domain,
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "result_count": len(results),
         "results": results,
     }
 
 
-def search_web(query: str, count: int = 5) -> dict:
+def search_web(query: str, count: int = 5, domain: str = "general") -> dict:
     """Consulta Brave Search API y devuelve metadatos normalizados.
 
     No registra la consulta ni guarda resultados. El proveedor solo se invoca
@@ -155,7 +177,7 @@ def search_web(query: str, count: int = 5) -> dict:
     """
     backend = os.getenv("RESEARCH_BACKEND", "brave").strip().lower()
     if backend == "searxng":
-        return _search_searxng(query, count)
+        return _search_searxng(query, count, domain)
     if backend != "brave":
         raise ResearchProviderNotConfigured
 
@@ -163,7 +185,8 @@ def search_web(query: str, count: int = 5) -> dict:
     if not api_key:
         raise ResearchProviderNotConfigured
 
-    params = urlencode({"q": query, "count": max(1, min(count, 10))})
+    provider_query = _query_for_domain(query, domain)
+    params = urlencode({"q": provider_query, "count": max(1, min(count, 10))})
     request = Request(
         f"https://api.search.brave.com/res/v1/web/search?{params}",
         headers={
@@ -229,6 +252,7 @@ def search_web(query: str, count: int = 5) -> dict:
     return {
         "provider": "brave_search",
         "query": query,
+        "domain": domain,
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "result_count": len(results),
         "results": results,
