@@ -21,7 +21,9 @@ def _validate_https_endpoint(value: str, name: str) -> None:
         or parsed.query
         or not valid_port
     ):
-        raise ValueError(f"{name} must be an absolute HTTPS URL without credentials, query or fragment")
+        raise ValueError(
+            f"{name} must be an absolute HTTPS URL without credentials, query or fragment"
+        )
 
 
 def _env_bool(name: str, default: bool) -> bool:
