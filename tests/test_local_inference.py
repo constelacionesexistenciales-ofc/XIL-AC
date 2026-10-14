@@ -78,6 +78,9 @@ def test_local_provider_rejects_malformed_response(monkeypatch):
         "http://localhost:99999",
         "http://localhost:11434?target=attacker",
         "http://localhost:11434#fragment",
+        "http://localhost:11434/other-path",
+        "http://localhost:11434/api/chat",
+        "http://localhost:11434/%2f%2fattacker.example",
     ],
 )
 def test_local_provider_rejects_ssrf_destination_variants(url):
