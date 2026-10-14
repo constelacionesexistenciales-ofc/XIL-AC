@@ -21,11 +21,16 @@ def make_request(**overrides):
 
 
 def make_handlers(calls=None):
-    calls = calls if calls is not None else []
-    return {
-        stage: (lambda request, previous, stage=stage: calls.append(stage) or f"salida-{stage.value}")
-        for stage in REQUIRED_ORDER
-    }
+    calls = calls if calls is not None else {}
+
+    def handler_for(stage):
+        def handler(request, previous):
+            calls.append(stage)
+            return f"salida-{stage.value}"
+
+        return handler
+
+    return {stage: handler_for(stage) for stage in REQUIRED_ORDER}
 
 
 def test_runs_all_stages_in_required_order_and_requires_review():
