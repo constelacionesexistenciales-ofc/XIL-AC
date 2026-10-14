@@ -146,7 +146,11 @@ def test_research_fails_closed_when_api_privacy_detector_raises(monkeypatch):
 
     monkeypatch.setattr(api, "detect_research_sensitive_content", detector_failure)
     monkeypatch.setattr(api, "search_web", lambda *args: called.append(args))
-    monkeypatch.setattr(api, "enforce_rate_limit", lambda *args, **kwargs: called.append("rate_limit"))
+    monkeypatch.setattr(
+        api,
+        "enforce_rate_limit",
+        lambda *args, **kwargs: called.append("rate_limit"),
+    )
     monkeypatch.setattr(api, "record_audit_event", lambda *args: called.append("audit"))
 
     response = client.post(
