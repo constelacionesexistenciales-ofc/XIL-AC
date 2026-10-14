@@ -94,8 +94,6 @@ def test_local_provider_rejects_ssrf_destination_variants(url):
         "http://127.0.0.1:11434",
         "http://localhost:11434",
         "http://[::1]:11434",
-        "http://ollama:11434",
-        "http://host.docker.internal:11434",
     ],
 )
 def test_local_provider_accepts_only_explicit_local_destinations(url):
@@ -129,3 +127,29 @@ def test_local_provider_fails_closed_on_redirect(monkeypatch):
     monkeypatch.setattr(local, "build_opener", lambda *handlers: RedirectingOpener())
     with pytest.raises(LocalInferenceError, match="local_model_unavailable"):
         OllamaLocalProvider("model:small").generate("synthetic prompt")
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["http://ollama:11434", "http://host.docker.internal:11434"],
+)
+def test_local_provider_rejects_container_aliases_without_opt_in(url, monkeypatch):
+    monkeypatch.delenv("XILAC_ALLOW_CONTAINER_MODEL_HOSTS", raising=False)
+    with pytest.raises(LocalInferenceError):
+        OllamaLocalProvider("model", url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["http://ollama:11434", "http://host.docker.internal:11434"],
+)
+def test_local_provider_accepts_container_aliases_only_with_opt_in(url, monkeypatch):
+    monkeypatch.setenv("XILAC_ALLOW_CONTAINER_MODEL_HOSTS", "true")
+    provider = OllamaLocalProvider("model", url)
+    assert provider.base_url == url
+
+
+def test_local_provider_rejects_invalid_container_host_opt_in(monkeypatch):
+    monkeypatch.setenv("XILAC_ALLOW_CONTAINER_MODEL_HOSTS", "yes")
+    with pytest.raises(LocalInferenceError):
+        OllamaLocalProvider("model", "http://ollama:11434")
