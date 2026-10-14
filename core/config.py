@@ -3,6 +3,29 @@ from urllib.parse import urlparse
 import os
 
 
+def _validate_https_endpoint(value: str, name: str) -> None:
+    try:
+        parsed = urlparse(value)
+        # OIDC endpoints must be absolute HTTPS URLs without userinfo or fragments.
+        # Query strings are rejected to avoid embedding tokens or secrets in endpoint URLs.
+        valid_port = parsed.port is None or 1 <= parsed.port <= 65535
+    except ValueError:
+        valid_port = False
+        parsed = urlparse("")
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or parsed.query
+        or not valid_port
+    ):
+        raise ValueError(
+            f"{name} must be an absolute HTTPS URL without credentials, query or fragment"
+        )
+
+
 def _env_bool(name: str, default: bool) -> bool:
     value = os.getenv(name)
     if value is None:
@@ -47,10 +70,8 @@ class Settings:
                 raise ValueError("OIDC_AUDIENCE is required in staging and production")
             if not self.oidc_jwks_url:
                 raise ValueError("OIDC_JWKS_URL is required in staging and production")
-            if urlparse(self.oidc_issuer).scheme != "https":
-                raise ValueError("OIDC_ISSUER must use HTTPS")
-            if urlparse(self.oidc_jwks_url).scheme != "https":
-                raise ValueError("OIDC_JWKS_URL must use HTTPS")
+            _validate_https_endpoint(self.oidc_issuer, "OIDC_ISSUER")
+            _validate_https_endpoint(self.oidc_jwks_url, "OIDC_JWKS_URL")
             if not self.oidc_roles_claim:
                 raise ValueError("OIDC_ROLES_CLAIM cannot be empty")
             if not os.getenv("DATABASE_URL", "").strip():

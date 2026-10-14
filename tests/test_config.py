@@ -55,3 +55,36 @@ def test_oidc_urls_must_use_https():
     )
     with pytest.raises(ValueError, match="HTTPS"):
         settings.validate()
+
+
+@pytest.mark.parametrize(
+    "issuer,jwks",
+    [
+        ("https:///missing-host", "https://identity.example.test/keys"),
+        ("https://identity.example.test/", "https://user:pass@identity.example.test/keys"),
+        ("https://identity.example.test/?token=secret", "https://identity.example.test/keys"),
+        ("https://identity.example.test/", "https://identity.example.test/keys#fragment"),
+        ("https://identity.example.test/", "https://identity.example.test:99999/keys"),
+    ],
+)
+def test_oidc_endpoints_reject_ambiguous_or_credential_bearing_urls(issuer, jwks):
+    settings = Settings(
+        environment="production",
+        oidc_issuer=issuer,
+        oidc_audience="xilac-api",
+        oidc_jwks_url=jwks,
+    )
+    with pytest.raises(ValueError, match="absolute HTTPS URL"):
+        settings.validate()
+
+
+def test_oidc_endpoints_accept_absolute_https_urls(monkeypatch):
+    settings = Settings(
+        environment="production",
+        oidc_issuer="https://identity.example.test/tenant",
+        oidc_audience="xilac-api",
+        oidc_jwks_url="https://identity.example.test/.well-known/jwks.json",
+    )
+    # Set only the unrelated required database and gate prerequisites.
+    monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@localhost/test")
+    settings.validate()
