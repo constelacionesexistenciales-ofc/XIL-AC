@@ -13,7 +13,7 @@ services:
     cap_drop:
       - ALL
     networks:
-      - default
+      - egress
 
 volumes:
   searxng_config:
