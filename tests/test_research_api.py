@@ -136,3 +136,32 @@ def test_research_blocks_session_material_before_provider(monkeypatch):
         assert response.status_code == 423, query
         assert response.json()["code"] == "POSSIBLE_SENSITIVE_CONTENT", query
     assert called == []
+
+def test_research_fails_closed_when_api_privacy_detector_raises(monkeypatch):
+    headers = _auth(monkeypatch)
+    called = []
+
+    def detector_failure(_query):
+        raise RuntimeError("synthetic detector failure")
+
+    monkeypatch.setattr(api, "detect_research_sensitive_content", detector_failure)
+    monkeypatch.setattr(api, "search_web", lambda *args: called.append(args))
+    monkeypatch.setattr(
+        api,
+        "enforce_rate_limit",
+        lambda *args, **kwargs: called.append("rate_limit"),
+    )
+    monkeypatch.setattr(api, "record_audit_event", lambda *args: called.append("audit"))
+
+    response = client.post(
+        "/v1/research",
+        headers=headers,
+        json={"query": "public research question", "confirm_public_query": True},
+    )
+
+    assert response.status_code == 423
+    assert response.json()["status"] == "privacy_check_failed"
+    assert response.json()["code"] == "PRIVACY_CHECK_FAILED"
+    assert "synthetic detector failure" not in response.text
+    assert called == []
+

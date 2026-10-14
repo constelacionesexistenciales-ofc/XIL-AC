@@ -161,7 +161,22 @@ def research(
     principal: Principal = Depends(require_roles("facilitator", "admin")),
 ) -> JSONResponse:
     """Search public web sources for general research; never stores query text."""
-    finding = detect_research_sensitive_content(request.query)
+    try:
+        finding = detect_research_sensitive_content(request.query)
+    except Exception:
+        # Privacy checks must fail closed without exposing detector internals.
+        return JSONResponse(
+            status_code=status.HTTP_423_LOCKED,
+            content={
+                "status": "privacy_check_failed",
+                "code": "PRIVACY_CHECK_FAILED",
+                "categories": ["privacy_check_failed"],
+                "notice": (
+                    "No se pudo completar la revisión de privacidad. "
+                    "La consulta fue bloqueada y no se envió al proveedor."
+                ),
+            },
+        )
     if finding.should_warn:
         return JSONResponse(
             status_code=423,
