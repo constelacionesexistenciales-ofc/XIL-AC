@@ -189,7 +189,11 @@ def search_web(
     # Defense at the provider boundary: direct callers cannot bypass API-level checks.
     if confirmed_public_query is not True:
         raise ResearchPrivacyGateRejected
-    finding = detect_research_sensitive_content(query)
+    try:
+        finding = detect_research_sensitive_content(query)
+    except Exception:
+        # Detector failures must never open the provider boundary.
+        raise ResearchPrivacyGateRejected from None
     if finding.should_warn:
         raise ResearchPrivacyGateRejected
 
