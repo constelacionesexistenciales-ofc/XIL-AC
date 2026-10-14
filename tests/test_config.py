@@ -78,7 +78,7 @@ def test_oidc_endpoints_reject_ambiguous_or_credential_bearing_urls(issuer, jwks
         settings.validate()
 
 
-def test_oidc_endpoints_accept_absolute_https_urls():
+def test_oidc_endpoints_accept_absolute_https_urls(monkeypatch):
     settings = Settings(
         environment="production",
         oidc_issuer="https://identity.example.test/tenant",
@@ -86,9 +86,5 @@ def test_oidc_endpoints_accept_absolute_https_urls():
         oidc_jwks_url="https://identity.example.test/.well-known/jwks.json",
     )
     # Set only the unrelated required database and gate prerequisites.
-    import os
-    os.environ["DATABASE_URL"] = "postgresql://test:test@localhost/test"
-    try:
-        settings.validate()
-    finally:
-        os.environ.pop("DATABASE_URL", None)
+    monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@localhost/test")
+    settings.validate()
