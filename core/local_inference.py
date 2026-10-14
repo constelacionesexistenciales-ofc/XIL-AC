@@ -35,6 +35,7 @@ def _validated_base_url(base_url: str) -> str:
         or parsed.hostname not in allowed_hosts
         or parsed.username
         or parsed.password
+        or parsed.path not in {"", "/"}
         or parsed.query
         or parsed.fragment
         or port == 0
