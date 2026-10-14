@@ -6,6 +6,7 @@ processing and does not establish that a model is installed or performant.
 from __future__ import annotations
 
 import json
+import os
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -25,7 +26,13 @@ class _NoRedirectHandler(HTTPRedirectHandler):
 
 def _validated_base_url(base_url: str) -> str:
     parsed = urlparse(base_url.strip())
-    allowed_hosts = {"127.0.0.1", "localhost", "::1", "ollama", "host.docker.internal"}
+    allowed_hosts = {"127.0.0.1", "localhost", "::1"}
+    # Container aliases can resolve differently across networks; require an explicit opt-in.
+    allow_container_hosts = (
+        os.getenv("XILAC_ALLOW_CONTAINER_MODEL_HOSTS", "false").strip().lower() == "true"
+    )
+    if allow_container_hosts:
+        allowed_hosts.update({"ollama", "host.docker.internal"})
     try:
         port = parsed.port
     except ValueError:
