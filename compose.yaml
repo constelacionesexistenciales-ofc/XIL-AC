@@ -13,6 +13,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    networks:
+      - backend
 
   migrate:
     build: .
@@ -23,6 +25,8 @@ services:
       db:
         condition: service_healthy
     restart: "no"
+    networks:
+      - backend
 
   api:
     build: .
@@ -45,6 +49,14 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped
+    networks:
+      - backend
+      - egress
+
+networks:
+  backend:
+    internal: true
+  egress: {}
 
 volumes:
   postgres_data:
