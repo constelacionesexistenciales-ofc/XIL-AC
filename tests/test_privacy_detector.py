@@ -1,4 +1,6 @@
-from core.privacy_detector import detect_sensitive_content
+import pytest
+
+from core.privacy_detector import detect_research_sensitive_content, detect_sensitive_content
 
 
 def test_detects_email_without_returning_the_value():
@@ -38,3 +40,45 @@ def test_empty_or_unverifiable_content_fails_cautiously():
     finding = detect_sensitive_content("   ")
     assert finding.should_warn
     assert finding.risk == "unknown"
+
+
+
+@pytest.mark.parametrize(
+    ("query", "expected_category"),
+    [
+        ("Contacto: persona-sintetica@example.invalid", "identificador_directo"),
+        ("Mi diagnóstico requiere privacidad", "informacion_de_salud_personal"),
+        ("Preparar el informe de sesión para consultante", "contenido_de_sesion"),
+        ("Quiero hacerme daño", "informacion_de_alta_sensibilidad"),
+    ],
+)
+def test_research_privacy_gate_blocks_synthetic_sensitive_queries(query, expected_category):
+    finding = detect_research_sensitive_content(query)
+
+    assert finding.should_warn
+    assert expected_category in finding.categories
+    assert query not in repr(finding)
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Resumen de evidencia científica sobre salud pública",
+        "Historia general de la psicología en el siglo XX",
+        "Cómo se construyen las decisiones en los vínculos",
+    ],
+)
+def test_research_privacy_gate_allows_general_nonpersonal_topics(query):
+    finding = detect_research_sensitive_content(query)
+
+    assert not finding.should_warn
+    assert finding.risk == "no_signal_detected"
+    assert finding.categories == ()
+
+
+def test_research_privacy_gate_blocks_empty_or_unverifiable_query():
+    finding = detect_research_sensitive_content("   ")
+
+    assert finding.should_warn
+    assert finding.risk == "unknown"
+    assert "contenido_no_verificable" in finding.categories
