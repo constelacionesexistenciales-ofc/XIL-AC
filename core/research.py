@@ -9,6 +9,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from core.privacy_detector import detect_research_sensitive_content
+
 
 class _HTTPSProviderRedirectHandler(HTTPRedirectHandler):
     """Allow redirects only to the fixed HTTPS provider host."""
@@ -42,6 +44,10 @@ class ResearchProviderUnavailable(ResearchError):
 
 class ResearchRateLimited(ResearchError):
     pass
+
+
+class ResearchPrivacyGateRejected(ResearchError):
+    """Raised when a public query has not passed the mandatory egress gate."""
 
 
 _DOMAIN_HINTS = {
@@ -169,12 +175,24 @@ def _search_searxng(query: str, count: int, domain: str = "general") -> dict:
     }
 
 
-def search_web(query: str, count: int = 5, domain: str = "general") -> dict:
+def search_web(
+    query: str,
+    count: int = 5,
+    domain: str = "general",
+    confirmed_public_query: bool = False,
+) -> dict:
     """Consulta Brave Search API y devuelve metadatos normalizados.
 
     No registra la consulta ni guarda resultados. El proveedor solo se invoca
     después de autenticar, autorizar y pasar los controles de privacidad.
     """
+    # Defense at the provider boundary: direct callers cannot bypass API-level checks.
+    if confirmed_public_query is not True:
+        raise ResearchPrivacyGateRejected
+    finding = detect_research_sensitive_content(query)
+    if finding.should_warn:
+        raise ResearchPrivacyGateRejected
+
     backend = os.getenv("RESEARCH_BACKEND", "brave").strip().lower()
     if backend == "searxng":
         return _search_searxng(query, count, domain)

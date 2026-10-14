@@ -21,6 +21,7 @@ from core.rate_limit import RateLimitExceeded, RateLimitStorageUnavailable, enfo
 from core.research import (
     ResearchProviderNotConfigured,
     ResearchProviderUnavailable,
+    ResearchPrivacyGateRejected,
     ResearchRateLimited,
     search_web,
 )
@@ -222,7 +223,15 @@ def research(
         ) from None
 
     try:
-        result = search_web(request.query, request.count, request.domain)
+        result = search_web(request.query, request.count, request.domain, True)
+    except ResearchPrivacyGateRejected:
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail=(
+                "La consulta no superó el control obligatorio de privacidad; "
+                "búsqueda bloqueada."
+            ),
+        ) from None
     except ResearchProviderNotConfigured:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

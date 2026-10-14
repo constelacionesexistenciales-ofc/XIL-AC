@@ -72,7 +72,7 @@ def test_research_success_returns_trace_and_disclaims_synthesis(monkeypatch):
     monkeypatch.setattr(
         api,
         "search_web",
-        lambda query, count, domain: {
+        lambda query, count, domain, confirmed_public_query: {
             "provider": "brave_search",
             "query": query,
             "retrieved_at": "2026-10-11T00:00:00+00:00",
