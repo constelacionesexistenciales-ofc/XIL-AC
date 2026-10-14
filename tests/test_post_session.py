@@ -21,7 +21,7 @@ def make_request(**overrides):
 
 
 def make_handlers(calls=None):
-    calls = calls if calls is not None else {}
+    calls = calls if calls is not None else []
 
     def handler_for(stage):
         def handler(request, previous):
