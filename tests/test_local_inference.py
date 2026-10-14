@@ -65,3 +65,64 @@ def test_local_provider_rejects_malformed_response(monkeypatch):
     monkeypatch.setattr(local, "build_opener", lambda *handlers: FakeOpener(b"not json"))
     with pytest.raises(LocalInferenceError):
         OllamaLocalProvider("model:small").generate("synthetic")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://192.0.2.10:11434",
+        "http://[2001:db8::1]:11434",
+        "http://localhost.attacker.example:11434",
+        "http://ollama.attacker.example:11434",
+        "http://user:secret@localhost:11434",
+        "http://localhost:99999",
+        "http://localhost:11434?target=attacker",
+        "http://localhost:11434#fragment",
+    ],
+)
+def test_local_provider_rejects_ssrf_destination_variants(url):
+    with pytest.raises(LocalInferenceError):
+        OllamaLocalProvider("model", url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://127.0.0.1:11434",
+        "http://localhost:11434",
+        "http://[::1]:11434",
+        "http://ollama:11434",
+        "http://host.docker.internal:11434",
+    ],
+)
+def test_local_provider_accepts_only_explicit_local_destinations(url):
+    provider = OllamaLocalProvider("model", url)
+    assert provider.base_url == url
+
+
+def test_local_provider_rejects_oversized_response(monkeypatch):
+    provider = OllamaLocalProvider("model:small")
+    oversized = b"x" * (provider.MAX_RESPONSE_BYTES + 1)
+    monkeypatch.setattr(
+        local, "build_opener", lambda *handlers: FakeOpener(oversized)
+    )
+    with pytest.raises(LocalInferenceError, match="response_too_large"):
+        provider.generate("synthetic prompt")
+
+
+def test_local_provider_fails_closed_on_redirect(monkeypatch):
+    from urllib.error import HTTPError
+
+    class RedirectingOpener:
+        def open(self, request, timeout):
+            raise HTTPError(
+                request.full_url,
+                302,
+                "Found",
+                {"Location": "http://192.0.2.10:11434/api/chat"},
+                None,
+            )
+
+    monkeypatch.setattr(local, "build_opener", lambda *handlers: RedirectingOpener())
+    with pytest.raises(LocalInferenceError, match="local_model_unavailable"):
+        OllamaLocalProvider("model:small").generate("synthetic prompt")
