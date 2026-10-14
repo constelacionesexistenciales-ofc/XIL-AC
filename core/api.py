@@ -227,7 +227,10 @@ def research(
     except ResearchPrivacyGateRejected:
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
-            detail="La consulta no superó el control obligatorio de privacidad; búsqueda bloqueada.",
+            detail=(
+                "La consulta no superó el control obligatorio de privacidad; "
+                "búsqueda bloqueada."
+            ),
         ) from None
     except ResearchProviderNotConfigured:
         raise HTTPException(
