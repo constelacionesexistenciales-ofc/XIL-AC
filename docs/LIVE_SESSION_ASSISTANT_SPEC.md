@@ -98,3 +98,17 @@ Una recomendación principal y hasta cinco preguntas posibles, ordenadas por pri
 8. Las señales débiles no activan el modo automáticamente.
 9. Las pruebas no contienen datos reales de consultantes.
 10. No se habilita procesamiento remoto ni se abre la puerta de producción como consecuencia de esta función.
+
+## Fidelidad al lenguaje y generación de textos personales
+
+- En discursos, cartas u otros textos en nombre del consultante, separar hechos y expresiones aportados por la persona de las propuestas creativas del asistente.
+- No inventar anécdotas, recuerdos compartidos, cualidades personales ni detalles biográficos para hacer que un texto parezca auténtico.
+- Cuando los datos personales sean insuficientes, ofrecer una base genérica explícitamente identificada como borrador y señalar dónde incorporar recuerdos reales.
+- El humor es opcional: no forzar chistes solo porque se haya pedido un tono ligero. Si el consultante reacciona de forma ambigua a una frase, explorar primero qué le sucede con esa expresión.
+- Si el facilitador acaba de formular una pregunta y la respuesta aún no está disponible, no atribuir una emoción ni completar el significado por la persona. Priorizar una pregunta abierta y esperar evidencia nueva.
+- No se habilita procesamiento remoto de sesiones como consecuencia de esta especificación; requiere controles técnicos y aprobación independientes.
+
+11. Los textos personales no incluyen anécdotas ni detalles biográficos inventados.
+12. Una reacción ambigua ante humor genera exploración, no una interpretación ni otro chiste automático.
+13. Una pregunta pendiente no se trata como si el consultante ya la hubiera respondido.
+14. Los resultados de pruebas se etiquetan como observados, fallidos, bloqueados o no ejecutados; no se simulan.
