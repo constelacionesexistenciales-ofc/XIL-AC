@@ -5,6 +5,10 @@ import pytest
 import core.research as research
 
 
+def _search_public(*args, **kwargs):
+    return research.search_web(*args, confirmed_public_query=True, **kwargs)
+
+
 class FakeResponse:
     def __init__(self, payload):
         self.payload = json.dumps(payload).encode("utf-8")
@@ -33,7 +37,7 @@ class FakeOpener:
 def test_search_web_requires_provider_secret(monkeypatch):
     monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
     with pytest.raises(research.ResearchProviderNotConfigured):
-        research.search_web("climate adaptation")
+        _search_public("climate adaptation")
 
 
 def test_search_web_normalizes_https_results_and_deduplicates(monkeypatch):
@@ -67,7 +71,7 @@ def test_search_web_normalizes_https_results_and_deduplicates(monkeypatch):
     }
     monkeypatch.setattr(research, "build_opener", lambda *handlers: FakeOpener(payload))
 
-    result = research.search_web("climate adaptation", count=5)
+    result = _search_public("climate adaptation", count=5)
 
     assert result["provider"] == "brave_search"
     assert result["result_count"] == 2
@@ -85,7 +89,7 @@ def test_search_web_caps_requested_result_count(monkeypatch):
         lambda *handlers: FakeOpener({"web": {"results": []}}, captured),
     )
 
-    result = research.search_web("climate adaptation", count=50)
+    result = _search_public("climate adaptation", count=50)
 
     assert "count=10" in captured["url"]
     assert captured["timeout"] == 8
@@ -131,7 +135,7 @@ def test_self_hosted_searxng_search_needs_no_brave_key(monkeypatch):
         lambda *handlers: FakeOpener(payload, captured),
     )
 
-    result = research.search_web("public research question", count=5)
+    result = _search_public("public research question", count=5)
 
     assert result["provider"] == "self_hosted_searxng"
     assert result["result_count"] == 1
@@ -144,13 +148,13 @@ def test_self_hosted_searxng_rejects_remote_plain_http(monkeypatch):
     monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
     monkeypatch.setenv("SEARXNG_BASE_URL", "http://search.example.org")
     with pytest.raises(research.ResearchProviderNotConfigured):
-        research.search_web("public research question")
+        _search_public("public research question")
 
 
 def test_self_hosted_searxng_rejects_unknown_backend(monkeypatch):
     monkeypatch.setenv("RESEARCH_BACKEND", "unknown")
     with pytest.raises(research.ResearchProviderNotConfigured):
-        research.search_web("public research question")
+        _search_public("public research question")
 
 
 def test_self_hosted_redirect_handler_rejects_cross_origin():
@@ -166,7 +170,7 @@ def test_self_hosted_searxng_rejects_invalid_port(monkeypatch):
     monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
     monkeypatch.setenv("SEARXNG_BASE_URL", "http://searxng:not-a-port")
     with pytest.raises(research.ResearchProviderNotConfigured):
-        research.search_web("public research question")
+        _search_public("public research question")
 
 
 def test_self_hosted_redirect_handler_rejects_invalid_port():
@@ -176,3 +180,25 @@ def test_self_hosted_redirect_handler_rejects_invalid_port():
         request, None, 302, "Found", {}, "http://searxng:not-a-port/search"
     )
     assert rejected is None
+
+
+
+def test_provider_boundary_requires_explicit_public_confirmation(monkeypatch):
+    called = []
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "synthetic-provider-secret")
+    monkeypatch.setattr(research, "build_opener", lambda *args: called.append(args))
+    with pytest.raises(research.ResearchPrivacyGateRejected):
+        research.search_web("climate adaptation")
+    assert called == []
+
+
+def test_provider_boundary_rechecks_sensitive_query(monkeypatch):
+    called = []
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "synthetic-provider-secret")
+    monkeypatch.setattr(research, "build_opener", lambda *args: called.append(args))
+    with pytest.raises(research.ResearchPrivacyGateRejected):
+        research.search_web(
+            "Preparar el informe de sesión para paciente",
+            confirmed_public_query=True,
+        )
+    assert called == []
