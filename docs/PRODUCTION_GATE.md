@@ -35,3 +35,7 @@
 
 ## Criterio de aprobación
 No declarar producción habilitada hasta que cada bloqueo aplicable tenga evidencia reproducible, revisión y aprobación de la persona responsable. Mantener los datos reales de consultantes fuera de la API remota mientras la puerta permanezca cerrada.
+
+
+## Indicador de movimiento de sesión (añadido en rama de trabajo)
+El indicador usa una habilitación independiente, SESSION_MOVEMENT_ENABLED=false por defecto. Su API persiste solo objetivo contextual, fase, fuente y puntuaciones, sin transcripciones ni texto libre; requiere migración 0003 y rol de facilitador/admin. La interfaz está disponible en /session-movement/ cuando el código se despliega, pero no implica que esté desplegada ni que la Puerta de Producción esté aprobada. Antes de habilitarlo en un entorno compartido: revisar retención/borrado de puntuaciones, ejecutar pruebas y revisión de acceso, verificar OIDC real y aprobar explícitamente el uso de datos. No habilitar el motor CFE ni enviar transcripciones a la API remota por esta funcionalidad.
