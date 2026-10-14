@@ -217,3 +217,48 @@ def test_provider_boundary_fails_closed_when_privacy_detector_raises(monkeypatch
     with pytest.raises(research.ResearchPrivacyGateRejected):
         research.search_web("public research question", confirmed_public_query=True)
     assert called == []
+
+
+
+@pytest.mark.parametrize("backend", ["brave", "searxng"])
+def test_provider_rejects_response_larger_than_one_megabyte(monkeypatch, backend):
+    if backend == "brave":
+        monkeypatch.setenv("RESEARCH_BACKEND", "brave")
+        monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "synthetic-provider-secret")
+    else:
+        monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
+        monkeypatch.setenv("SEARXNG_BASE_URL", "http://searxng:8080")
+        monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
+
+    oversized_payload = {"padding": "x" * 1_000_100}
+    monkeypatch.setattr(
+        research,
+        "build_opener",
+        lambda *handlers: FakeOpener(oversized_payload),
+    )
+
+    with pytest.raises(research.ResearchProviderUnavailable):
+        _search_public("public research question")
+
+
+@pytest.mark.parametrize("backend", ["brave", "searxng"])
+def test_provider_timeout_fails_as_safe_unavailable_error(monkeypatch, backend):
+    if backend == "brave":
+        monkeypatch.setenv("RESEARCH_BACKEND", "brave")
+        monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "synthetic-provider-secret")
+    else:
+        monkeypatch.setenv("RESEARCH_BACKEND", "searxng")
+        monkeypatch.setenv("SEARXNG_BASE_URL", "http://searxng:8080")
+        monkeypatch.delenv("BRAVE_SEARCH_API_KEY", raising=False)
+
+    class TimeoutOpener:
+        def open(self, request, timeout):
+            assert timeout == 8
+            raise TimeoutError("synthetic timeout detail must not escape")
+
+    monkeypatch.setattr(research, "build_opener", lambda *handlers: TimeoutOpener())
+
+    with pytest.raises(research.ResearchProviderUnavailable) as exc_info:
+        _search_public("public research question")
+
+    assert "synthetic timeout detail" not in str(exc_info.value)
