@@ -11,7 +11,7 @@ Prototipo de escritorio en desarrollo. La compilación automatizada del ejecutab
 - En Windows, el almacén de credenciales se protege con DPAPI para el usuario de Windows actual. No se incluyen credenciales iniciales ni secretos en el repositorio.
 - Esta primera versión configura una cuenta local. La administración de varias cuentas y la recuperación segura de acceso todavía deben implementarse antes de un despliegue multiusuario.
 
-**Importante:** como la contraseña se compartió en una conversación, no la reutilices para el alta inicial. Elegí una contraseña nueva y única. El PIN es una vía cómoda, pero más débil que la contraseña; el bloqueo de intentos y DPAPI reducen riesgos, no convierten el PIN en una credencial fuerte frente a un equipo comprometido.
+**Importante:** nunca reutilices una contraseña o PIN que hayas compartido, publicado o usado en pruebas. Elegí una contraseña nueva y única para el alta inicial. El PIN es una vía cómoda, pero más débil que la contraseña; el bloqueo de intentos y DPAPI reducen riesgos, no convierten el PIN en una credencial fuerte frente a un equipo comprometido.
 
 ## Política de privacidad
 - La transmisión remota está deshabilitada por diseño.
