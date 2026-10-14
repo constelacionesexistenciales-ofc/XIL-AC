@@ -202,3 +202,18 @@ def test_provider_boundary_rechecks_sensitive_query(monkeypatch):
             confirmed_public_query=True,
         )
     assert called == []
+
+
+def test_provider_boundary_fails_closed_when_privacy_detector_raises(monkeypatch):
+    called = []
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "synthetic-provider-secret")
+
+    def detector_failure(_query):
+        raise RuntimeError("synthetic detector failure")
+
+    monkeypatch.setattr(research, "detect_research_sensitive_content", detector_failure)
+    monkeypatch.setattr(research, "build_opener", lambda *args: called.append(args))
+
+    with pytest.raises(research.ResearchPrivacyGateRejected):
+        research.search_web("public research question", confirmed_public_query=True)
+    assert called == []
