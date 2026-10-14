@@ -262,3 +262,48 @@ def test_provider_timeout_fails_as_safe_unavailable_error(monkeypatch, backend):
         _search_public("public research question")
 
     assert "synthetic timeout detail" not in str(exc_info.value)
+
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://user:placeholder@api.search.brave.com/search",
+        "https://api.search.brave.com/search#fragment",
+        "https://api.search.brave.com:8443/search",
+        "http://api.search.brave.com/search",
+        "https://127.0.0.1/metadata",
+        "https://[::1]/metadata",
+        "https://169.254.169.254/latest/meta-data",
+    ],
+)
+def test_brave_redirect_handler_rejects_credentials_fragments_and_untrusted_targets(target):
+    handler = research._HTTPSProviderRedirectHandler()
+    request = research.Request("https://api.search.brave.com/res/v1/web/search")
+
+    rejected = handler.redirect_request(
+        request, None, 302, "Found", {}, target
+    )
+
+    assert rejected is None
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "http://user:placeholder@searxng:8080/search",
+        "http://searxng:8080/search#fragment",
+        "http://other-service:8080/search",
+        "https://searxng:8080/search",
+        "http://searxng:not-a-port/search",
+    ],
+)
+def test_searxng_redirect_handler_rejects_credentials_fragments_and_origin_changes(target):
+    handler = research._SameOriginRedirectHandler(("http", "searxng", 8080))
+    request = research.Request("http://searxng:8080/search")
+
+    rejected = handler.redirect_request(
+        request, None, 302, "Found", {}, target
+    )
+
+    assert rejected is None
