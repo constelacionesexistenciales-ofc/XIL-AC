@@ -25,13 +25,13 @@ El detector identifica señales explícitas como correos, teléfonos, documentos
 
 ## Inspección local preventiva de privacidad
 
-Hay una primera utilidad de inspección local que no realiza conexiones de red y no imprime el texto recibido:
+Hay una utilidad CLI de inspección local que no realiza conexiones de red y no imprime el texto recibido:
 
 ```bash
 python -m scripts.privacy_preflight < texto.txt
 ```
 
-Devuelve categorías y nivel de riesgo. Código de salida `0`: no detectó señales explícitas; `2`: bloquea por señales detectadas o contenido no verificable. Un resultado sin señales **no demuestra** que el texto esté libre de datos sensibles. Esta utilidad no está integrada automáticamente con una interfaz ni sustituye la compuerta remota.
+La utilidad **siempre bloquea la transmisión** y devuelve código de salida `2`, tanto si detecta señales como si no las detecta. Devuelve categorías y nivel de riesgo; un resultado sin señales explícitas no demuestra que el texto esté libre de datos sensibles. Un error del detector también bloquea. No interpretar nunca el resultado como autorización para enviar. Esta utilidad no está integrada automáticamente con una interfaz ni sustituye la compuerta remota.
 
 ## Inicio local con Docker
 1. Copiar `.env.example` a `.env`.
@@ -45,7 +45,6 @@ Docker Compose es solo para desarrollo local, no una receta de despliegue produc
 - [Preproducción privada](docs/PREPRODUCCION_PRIVADA.md)
 - [Puerta de producción](docs/PRODUCTION_GATE.md)
 - [Seguridad y datos](docs/SECURITY.md)
-
 
 ## Prototipo de investigación web
 
