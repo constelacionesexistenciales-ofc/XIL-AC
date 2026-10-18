@@ -2,9 +2,9 @@ name: Private SAST fallback
 
 on:
   push:
-    branches: [main, 'feat/**', 'feature/**', 'audit/**']
+    branches: [main, 'feat/**', 'feature/**', 'audit/**', 'security/**']
   pull_request:
-    branches: [main, 'feat/**', 'feature/**', 'audit/**']
+    branches: [main, 'feat/**', 'feature/**', 'audit/**', 'security/**']
   workflow_dispatch:
   schedule:
     - cron: "30 6 * * 1"
@@ -46,6 +46,76 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+  container-image-security:
+    name: Container image scan, SBOM, and runtime smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Build local image
+        id: build
+        run: docker build --pull -t xilac-ci:${GITHUB_SHA} .
+
+      - name: Generate container SBOM (CycloneDX)
+        if: always() && steps.build.outcome == 'success'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.74.0
+          scan-type: image
+          image-ref: xilac-ci:${{ github.sha }}
+          format: cyclonedx
+          output: sbom-container.cdx.json
+          scanners: vuln
+
+      - name: Scan container image for HIGH/CRITICAL risks
+        if: always() && steps.build.outcome == 'success'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.74.0
+          scan-type: image
+          image-ref: xilac-ci:${{ github.sha }}
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          format: json
+          output: trivy-image-report.json
+          exit-code: "1"
+
+      - name: Start container and verify health endpoint
+        if: steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name xilac-ci-smoke -p 127.0.0.1:18000:8000 xilac-ci:${GITHUB_SHA}
+          cleanup() {
+            docker logs xilac-ci-smoke || true
+            docker rm -f xilac-ci-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18000/health/live >/dev/null; then
+              echo "PASS: container started and /health/live responded."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Container health endpoint did not become ready."
+          exit 1
+
+      - name: Upload image report and SBOM
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: xilac-container-sbom-and-trivy
+          path: |
+            sbom-container.cdx.json
+            trivy-image-report.json
+          if-no-files-found: warn
+          retention-days: 30
+
   trivy:
     name: Trivy filesystem security scan
     runs-on: ubuntu-latest
@@ -74,6 +144,7 @@ jobs:
           path: trivy-report.json
           if-no-files-found: warn
           retention-days: 30
+
   scanner-gate-self-test:
     name: Scanner gate self-test (synthetic findings)
     runs-on: ubuntu-latest
@@ -99,7 +170,7 @@ jobs:
           PY
           cat > "$RUNNER_TEMP/xilac-semgrep-self-test/rule.yml" <<'YAML'
           rules:
-            - id: xilac.self-test.eval
+            - id: xilac.self_test.eval
               languages: [python]
               severity: ERROR
               message: Synthetic self-test finding; never use eval on untrusted input.
@@ -134,7 +205,7 @@ jobs:
       - name: Create isolated Trivy secret fixture
         run: |
           mkdir -p "$RUNNER_TEMP/xilac-trivy-self-test"
-          printf '%s%s%s\n' 'GITHUB_TOKEN=ghp_' '0123456789abcdef0123456789abcdef' '0123' > "$RUNNER_TEMP/xilac-trivy-self-test/synthetic.env"
+          printf '%s%s%s\\n' 'GITHUB_TOKEN=ghp_' '0123456789abcdef0123456789abcdef' '0123' > "$RUNNER_TEMP/xilac-trivy-self-test/synthetic.env"
 
       - name: Verify Trivy exits nonzero on a controlled synthetic secret
         id: trivy_self_test
