@@ -109,6 +109,7 @@ def _search_searxng(query: str, count: int, domain: str = "general") -> dict:
         or not parsed_base.hostname
         or parsed_base.username
         or parsed_base.password
+        or "@" in parsed_base.netloc
         or parsed_base.query
         or parsed_base.fragment
         or (
