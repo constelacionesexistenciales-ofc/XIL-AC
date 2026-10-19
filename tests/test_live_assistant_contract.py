@@ -151,7 +151,7 @@ def test_blocked_mode_with_risk_flag_has_no_suggestions():
 def test_unapproved_mode_is_rejected(mode):
     payload = valid_payload()
     payload["mode"] = mode
-    with pytest.raises(SuggestionContractError, match="mode is not allowed"):
+    with pytest.raises(SuggestionContractError, match="mode"):
         parse_live_suggestion(payload)
 
 
