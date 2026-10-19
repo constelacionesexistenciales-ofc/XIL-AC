@@ -204,7 +204,7 @@ def parse_live_suggestion(payload: Mapping[str, Any]) -> LiveSuggestion:
             )
         if pending:
             raise SuggestionContractError(
-                "pending_question requires wait mode unless facilitator explicitly requests alternatives"
+                "pending_question requires wait mode unless the facilitator requests alternatives"
             )
         if reason is not None:
             raise SuggestionContractError("suggest mode must not include abstention_reason")
