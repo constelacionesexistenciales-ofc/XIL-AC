@@ -9,7 +9,7 @@ Conservar, importar, recuperar y contrastar conversaciones originales de XIL-AC 
 - No inventar timestamps, roles, mensajes eliminados, regeneraciones ni metadatos que la fuente no entregue.
 - Una edición/regeneración se conserva como versión o mensaje separado si la exportación de origen lo representa; nunca reemplaza silenciosamente el original.
 - Calcular SHA-256 por mensaje y verificarlo al recuperar.
-- Importación idempotente: el mismo lote no duplica registros; una colisión con contenido distinto aborta y requiere revisión.
+- Importación idempotente: el mismo lote no duplica registros; cuando existe `source_conversation_id`, la pareja `(source_system, source_conversation_id)` es única. Un conflicto de identidad o contenido aborta y requiere revisión.
 - Estados de cobertura: `VERIFIED`, `PARTIAL`, `MISSING`, `IMPORT_FAILED`. No declarar integridad completa sin recuento de origen comprobable.
 
 ## Alcance y límites de ChatGPT
@@ -18,6 +18,7 @@ La aplicación no obtiene por defecto acceso general al historial de la cuenta d
 ## Modelo de datos
 - `avc_conversations`: origen, IDs de origen, título, recuentos esperados/importados, estado de cobertura y metadatos.
 - `avc_messages`: ID, conversación, secuencia, rol, contenido exacto, metadatos de origen y hash.
+- La migración versionada impone unicidad de identidad de origen cuando `source_conversation_id` está disponible; el mismo origen no puede crear silenciosamente dos conversaciones internas.
 - La tabla de mensajes es append-only por contrato. La protección de producción debe incluir permisos de DB que nieguen UPDATE/DELETE a la cuenta de aplicación, política de retención/borrado aprobada y auditoría de acceso. La eliminación legal/autorizada debe ser una operación separada, registrada y verificable.
 
 ## Seguridad
