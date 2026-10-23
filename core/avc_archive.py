@@ -139,6 +139,11 @@ def save_conversation(record: ConversationRecord, messages: Iterable[RawMessage]
     batch = list(messages)
     if not record.source_system.strip():
         raise AVCError("source_system is required")
+    if (
+        record.source_conversation_id is not None
+        and not record.source_conversation_id.strip()
+    ):
+        raise AVCError("source_conversation_id cannot be blank")
     if record.capture_status not in {"VERIFIED", "PARTIAL", "MISSING", "IMPORT_FAILED"}:
         raise AVCError("invalid capture status")
     if record.expected_message_count is not None and record.expected_message_count < 0:
