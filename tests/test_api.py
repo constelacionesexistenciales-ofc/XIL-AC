@@ -155,4 +155,32 @@ def test_process_fails_closed_when_privacy_detector_raises(monkeypatch):
     assert response.json()["status"] == "privacy_check_failed"
     assert response.json()["code"] == "PRIVACY_CHECK_FAILED"
     assert "internal detector secret" not in response.text
-    assert audit_calls == []
+    assert response.json()["execution_id"] == audit_calls[0][0]
+    assert len(audit_calls) == 1
+    assert audit_calls[0][1] == "process.privacy_check"
+    assert audit_calls[0][3] == "detector_failed"
+    assert "texto sintético de prueba" not in repr(audit_calls[0])
+    assert "internal detector secret" not in repr(audit_calls[0])
+
+
+def test_process_stays_blocked_when_privacy_and_audit_both_fail(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+
+    def fail_detector(_text):
+        raise RuntimeError("internal detector secret")
+
+    def fail_audit(*_args):
+        raise RuntimeError("internal audit secret")
+
+    monkeypatch.setattr(api, "detect_sensitive_content", fail_detector)
+    monkeypatch.setattr(api, "record_audit_event", fail_audit)
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"text": "texto sintético de prueba"},
+    )
+
+    assert response.status_code == 423
+    assert response.json()["code"] == "PRIVACY_CHECK_FAILED"
+    assert "internal detector secret" not in response.text
+    assert "internal audit secret" not in response.text
