@@ -35,3 +35,6 @@ CREATE INDEX IF NOT EXISTS avc_messages_conversation_order_idx
     ON avc_messages (conversation_id, sequence_no);
 CREATE INDEX IF NOT EXISTS avc_conversations_source_idx
     ON avc_conversations (source_system, source_conversation_id);
+CREATE UNIQUE INDEX IF NOT EXISTS avc_conversations_source_identity_unique_idx
+    ON avc_conversations (source_system, source_conversation_id)
+    WHERE source_conversation_id IS NOT NULL;
