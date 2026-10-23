@@ -153,6 +153,22 @@ def _complete_sequence(
     )
 
 
+def _validate_conversation_identity(
+    existing: tuple[Any, ...] | None,
+    record: ConversationRecord,
+) -> None:
+    """Reject reimports that disagree with the immutable conversation header."""
+    if (
+        not existing
+        or existing[0] != record.source_system
+        or existing[1] != record.source_conversation_id
+        or existing[2] != record.title
+        or existing[3] != record.expected_message_count
+        or _json(existing[4]) != _json(record.metadata)
+    ):
+        raise AVCError("conversation identity or source metadata conflict")
+
+
 def save_conversation(record: ConversationRecord, messages: Iterable[RawMessage]) -> int:
     """Save source messages atomically and idempotently; never overwrite conflicting data.
 
@@ -199,16 +215,12 @@ def save_conversation(record: ConversationRecord, messages: Iterable[RawMessage]
             ),
         )
         existing = conn.execute(
-            """SELECT source_system, source_conversation_id
+            """SELECT source_system, source_conversation_id, title,
+                      expected_message_count, metadata
                FROM avc_conversations WHERE conversation_id=%s""",
             (record.conversation_id,),
         ).fetchone()
-        if (
-            not existing
-            or existing[0] != record.source_system
-            or existing[1] != record.source_conversation_id
-        ):
-            raise AVCError("conversation identity conflict")
+        _validate_conversation_identity(existing, record)
 
         for message in batch:
             digest = _message_hash(message)
