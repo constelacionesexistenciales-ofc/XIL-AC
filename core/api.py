@@ -85,7 +85,23 @@ def process(
 ) -> JSONResponse:
     # Defensa adicional: este análisis ocurre después de que el cuerpo llegó a la API.
     # No reemplaza un control local previo al envío ni garantiza detectar todo.
-    finding = detect_sensitive_content(request.text)
+    try:
+        finding = detect_sensitive_content(request.text)
+    except Exception:
+        # No permitir que un fallo del control de privacidad habilite el flujo.
+        # No exponer detalles internos ni registrar el texto recibido.
+        return JSONResponse(
+            status_code=status.HTTP_423_LOCKED,
+            content={
+                "status": "privacy_check_failed",
+                "code": "PRIVACY_CHECK_FAILED",
+                "categories": ["privacy_check_failed"],
+                "notice": (
+                    "No se pudo completar la revisión de privacidad. "
+                    "La solicitud fue bloqueada y no se procesó."
+                ),
+            },
+        )
     if finding.should_warn:
         return JSONResponse(
             status_code=423,
