@@ -312,3 +312,55 @@ def test_postgres_archive_detects_content_tampering(monkeypatch):
     assert restored["integrity"]["all_message_hashes_valid"] is False
     assert restored["integrity"]["manifest_valid"] is False
     assert restored["integrity"]["complete"] is False
+
+
+def test_postgres_archive_rejects_duplicate_source_conversation_identity(monkeypatch):
+    dsn = _postgres_dsn(monkeypatch)
+    source_id = f"source-{uuid4()}"
+    first = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id=source_id,
+        title="Source identity test",
+        capture_status="VERIFIED",
+        expected_message_count=1,
+        metadata={"fixture": "synthetic"},
+    )
+    save_conversation(first, [RawMessage(uuid4(), 0, "user", "first")])
+
+    duplicate = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id=source_id,
+        title="Source identity test",
+        capture_status="VERIFIED",
+        expected_message_count=1,
+        metadata={"fixture": "synthetic"},
+    )
+    with pytest.raises(AVCError, match="source metadata conflict"):
+        save_conversation(duplicate, [RawMessage(uuid4(), 0, "user", "duplicate")])
+
+    with psycopg.connect(dsn) as conn:
+        count = conn.execute(
+            """SELECT count(*) FROM avc_conversations
+               WHERE source_system=%s AND source_conversation_id=%s""",
+            ("synthetic-test", source_id),
+        ).fetchone()[0]
+    assert count == 1
+
+
+def test_save_rejects_blank_source_conversation_id_before_database_access(monkeypatch):
+    def fail_if_database_is_used():
+        pytest.fail("Database must not be accessed for invalid source identity")
+
+    monkeypatch.setattr("core.avc_archive.connection", fail_if_database_is_used)
+    record = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id="   ",
+        title=None,
+        capture_status="PARTIAL",
+        expected_message_count=0,
+    )
+    with pytest.raises(AVCError, match="source_conversation_id cannot be blank"):
+        save_conversation(record, [])
