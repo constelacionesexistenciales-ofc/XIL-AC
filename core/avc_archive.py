@@ -169,7 +169,7 @@ def save_conversation(record: ConversationRecord, messages: Iterable[RawMessage]
                (conversation_id, source_system, source_conversation_id, title,
                 capture_status, expected_message_count, imported_message_count, metadata)
                VALUES (%s,%s,%s,%s,%s,%s,0,%s::jsonb)
-               ON CONFLICT (conversation_id) DO NOTHING""",
+               ON CONFLICT DO NOTHING""",
             (
                 record.conversation_id,
                 record.source_system,
