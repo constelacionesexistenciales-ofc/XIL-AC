@@ -41,3 +41,37 @@ La aplicación no obtiene por defecto acceso general al historial de la cuenta d
 
 ## Integración inicial
 `core/avc_archive.py` ofrece funciones de persistencia/recuperación para PostgreSQL. El despliegue debe ejecutar explícitamente `initialize_schema()` como paso controlado de migración, no al arrancar cada petición. La interfaz, el importador oficial de exportaciones ChatGPT, el RBAC por conversación, la política de retención y las pruebas de integración deben completarse antes de producción.
+
+## Reglas adicionales de integridad y conservación
+
+- La secuencia se interpreta como índice de orden cero-basado: para declarar
+  `VERIFIED`, los índices recuperados deben coincidir exactamente con
+  `0..expected_message_count-1`. Contar mensajes sin comprobar los índices no
+  demuestra cobertura.
+- `imported_message_count` debe coincidir con el recuento real recuperado.
+  Cualquier discrepancia, hueco, duplicado o hash inválido impide declarar la
+  conversación completa.
+- `manifest_sha256` es un hash canónico versionado de los campos de origen
+  persistidos y de los hashes recalculados de los mensajes ordenados. Se
+  recalcula al importar y se verifica al recuperar.
+- El manifiesto canónico detecta inconsistencias accidentales; no es una firma
+  ni protege por sí solo frente a una persona que pueda modificar tanto la base
+  como el hash. Si el modelo de amenazas incluye esa capacidad, se necesita una
+  firma o un registro de integridad independiente.
+- La reimportación no debe modificar `captured_at` de la conversación ya
+  existente. La última importación/verificación, si se necesita, debe tener un
+  campo separado.
+- Las claves foráneas no deben borrar mensajes automáticamente al eliminar una
+  conversación. La eliminación debe pasar por el procedimiento autorizado,
+  con auditoría y verificación.
+- PostgreSQL normaliza los valores `TIMESTAMPTZ` a un instante; si una fuente
+  aporta una representación textual de fecha cuya forma exacta deba conservarse,
+  se debe almacenar además el valor fuente original como texto.
+
+## Evidencia de validación
+
+La validación de esta PR requiere que CI ejecute Ruff y todas las pruebas de
+contrato. Las pruebas unitarias sin PostgreSQL no sustituyen las pruebas de
+transacción, conflicto, idempotencia, recuperación y restauración. No declarar
+la implementación validada hasta que esas pruebas se ejecuten y sus resultados
+queden asociados al commit revisado.
