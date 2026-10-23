@@ -46,6 +46,9 @@ def test_migrations_apply_idempotently_to_postgresql(monkeypatch):
         avc_messages = conn.execute(
             "SELECT to_regclass('public.avc_messages')"
         ).fetchone()
+        avc_source_identity_index = conn.execute(
+            "SELECT to_regclass('public.avc_conversations_source_identity_unique_idx')"
+        ).fetchone()
 
     assert version == ("0001_initial",)
     assert rate_limit_version == ("0002_rate_limit_buckets",)
@@ -54,6 +57,9 @@ def test_migrations_apply_idempotently_to_postgresql(monkeypatch):
     assert rate_limit_table == ("rate_limit_buckets",)
     assert avc_conversations == ("avc_conversations",)
     assert avc_messages == ("avc_messages",)
+    assert avc_source_identity_index == (
+        "avc_conversations_source_identity_unique_idx",
+    )
 
 
 def test_audit_event_persists_without_session_content(monkeypatch):
