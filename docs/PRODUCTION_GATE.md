@@ -6,7 +6,7 @@
 ## Controles incorporados
 - [x] Aviso preventivo estándar y compuerta de sesiones cerrada por defecto.
 - [x] Detector heurístico de posibles datos sensibles que devuelve categorías sin repetir los valores detectados.
-- [x] Pruebas de reglas y del comportamiento de bloqueo de la API.
+- [x] Pruebas de reglas y del comportamiento de bloqueo de la API, incluida la excepción del detector de privacidad: `/v1/process` bloquea con HTTP 423, intenta registrar solo un evento técnico mínimo y no expone detalles internos (PR #72; validar el head actual antes de integrar).
 - [x] Validación OIDC/JWT preparada para staging/producción.
 - [x] Autorización por roles, auditoría sin transcripciones y límite del cuerpo HTTP.
 - [x] Contenedor no-root y puerto local enlazado a localhost.
@@ -32,7 +32,7 @@
 - El detector es heurístico; no garantiza detectar todo dato sensible ni determina que el contenido sea seguro.
 - La detección dentro de la API ocurre después de que el texto llegó al servidor; no evita la transmisión inicial.
 - La CLI de privacidad siempre devuelve bloqueo; no es una autorización ni un mecanismo de anonimización.
-- `POST /v1/process` responde HTTP 423 mientras la compuerta está cerrada. El motor no conectado no debe considerarse funcional.
+- `POST /v1/process` responde HTTP 423 mientras la compuerta está cerrada. Si falla el detector, la solicitud se bloquea antes de continuar; se intenta registrar solo `execution_id`, actor, tipo y resultado, sin contenido ni detalle de excepción. Si falla también la auditoría, la solicitud sigue bloqueada. La corrección está en PR #72 y requiere CI/revisión del head actual. El motor no conectado no debe considerarse funcional.
 - No hay gestor de secretos ni despliegue cloud verificado.
 - Un archivo de configuración de despliegue no prueba que el servicio esté publicado, privado ni protegido correctamente.
 

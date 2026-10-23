@@ -85,7 +85,34 @@ def process(
 ) -> JSONResponse:
     # Defensa adicional: este análisis ocurre después de que el cuerpo llegó a la API.
     # No reemplaza un control local previo al envío ni garantiza detectar todo.
-    finding = detect_sensitive_content(request.text)
+    trace = new_trace()
+    try:
+        finding = detect_sensitive_content(request.text)
+    except Exception:
+        # Fallar cerrado y registrar solo metadatos mínimos, nunca el texto ni la excepción.
+        try:
+            record_audit_event(
+                trace.execution_id,
+                "process.privacy_check",
+                principal.subject,
+                "detector_failed",
+            )
+        except Exception:
+            # El fallo de auditoría tampoco puede habilitar el procesamiento.
+            pass
+        return JSONResponse(
+            status_code=status.HTTP_423_LOCKED,
+            content={
+                "execution_id": trace.execution_id,
+                "status": "privacy_check_failed",
+                "code": "PRIVACY_CHECK_FAILED",
+                "categories": ["privacy_check_failed"],
+                "notice": (
+                    "No se pudo completar la revisión de privacidad. "
+                    "La solicitud fue bloqueada y no se procesó."
+                ),
+            },
+        )
     if finding.should_warn:
         return JSONResponse(
             status_code=423,
@@ -110,7 +137,6 @@ def process(
         )
     # El motor aún no está conectado; no registrar la transcripción.
     _ = request.mode, request.text
-    trace = new_trace()
     try:
         record_audit_event(
             trace.execution_id,
