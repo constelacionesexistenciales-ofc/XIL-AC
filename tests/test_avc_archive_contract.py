@@ -2,19 +2,23 @@
 
 from datetime import datetime, timezone
 from hashlib import sha256
+import os
+from pathlib import Path
 from uuid import uuid4
 
+import psycopg
 import pytest
 
 from core.avc_archive import (
     AVCError,
     ConversationRecord,
     RawMessage,
-    SCHEMA_SQL,
     _complete_sequence,
     _manifest_hash,
     _message_hash,
     _validate_conversation_identity,
+    initialize_schema,
+    retrieve_conversation,
     save_conversation,
 )
 
@@ -110,8 +114,11 @@ def test_manifest_hash_changes_when_source_content_changes():
     assert _manifest_hash(conversation, changed) != original
 
 
-def test_schema_does_not_delete_messages_cascading_from_conversation():
-    assert "ON DELETE CASCADE" not in SCHEMA_SQL.upper()
+def test_versioned_schema_does_not_delete_messages_cascading_from_conversation():
+    migration = (
+        Path(__file__).resolve().parents[1] / "migrations" / "0003_avc_archive.sql"
+    ).read_text(encoding="utf-8")
+    assert "ON DELETE CASCADE" not in migration.upper()
 
 
 def test_save_rejects_out_of_order_messages_before_database_access(monkeypatch):
@@ -194,3 +201,114 @@ def test_reimport_rejects_missing_conversation_header():
     record = _conversation_record()
     with pytest.raises(AVCError, match="source metadata conflict"):
         _validate_conversation_identity(None, record)
+
+
+def _postgres_dsn(monkeypatch):
+    dsn = os.getenv("TEST_DATABASE_URL")
+    if not dsn:
+        pytest.skip("TEST_DATABASE_URL is not configured")
+    monkeypatch.setenv("DATABASE_URL", dsn)
+    initialize_schema()
+    return dsn
+
+
+def test_postgres_archive_round_trip_is_exact_and_idempotent(monkeypatch):
+    dsn = _postgres_dsn(monkeypatch)
+    conversation_id = uuid4()
+    record = ConversationRecord(
+        conversation_id=conversation_id,
+        source_system="synthetic-test",
+        source_conversation_id=f"source-{conversation_id}",
+        title="Synthetic conversation",
+        capture_status="VERIFIED",
+        expected_message_count=2,
+        metadata={"fixture": "synthetic"},
+    )
+    messages = [
+        RawMessage(
+            uuid4(),
+            0,
+            "user",
+            "¿Qué reconocés?\r\n  acción 🧭 ",
+            source_message_id="source-message-0",
+        ),
+        RawMessage(
+            uuid4(),
+            1,
+            "assistant",
+            "",
+            source_message_id="source-message-1",
+        ),
+    ]
+
+    assert save_conversation(record, messages) == 2
+    with psycopg.connect(dsn) as conn:
+        captured_before = conn.execute(
+            "SELECT captured_at FROM avc_conversations WHERE conversation_id=%s",
+            (conversation_id,),
+        ).fetchone()[0]
+
+    assert save_conversation(record, messages) == 2
+    with psycopg.connect(dsn) as conn:
+        captured_after = conn.execute(
+            "SELECT captured_at FROM avc_conversations WHERE conversation_id=%s",
+            (conversation_id,),
+        ).fetchone()[0]
+
+    restored = retrieve_conversation(conversation_id)
+    assert captured_after == captured_before
+    assert restored["integrity"]["complete"] is True
+    assert [message["content_raw"] for message in restored["messages"]] == [
+        "¿Qué reconocés?\r\n  acción 🧭 ",
+        "",
+    ]
+
+
+def test_postgres_archive_marks_missing_sequence_as_partial(monkeypatch):
+    _postgres_dsn(monkeypatch)
+    conversation_id = uuid4()
+    record = ConversationRecord(
+        conversation_id=conversation_id,
+        source_system="synthetic-test",
+        source_conversation_id=f"source-{conversation_id}",
+        title="Incomplete synthetic conversation",
+        capture_status="VERIFIED",
+        expected_message_count=3,
+    )
+    messages = [
+        RawMessage(uuid4(), 0, "user", "first"),
+        RawMessage(uuid4(), 2, "assistant", "third"),
+    ]
+
+    save_conversation(record, messages)
+    restored = retrieve_conversation(conversation_id)
+
+    assert restored["conversation"]["capture_status"] == "PARTIAL"
+    assert restored["integrity"]["sequence_complete"] is False
+    assert restored["integrity"]["complete"] is False
+
+
+def test_postgres_archive_detects_content_tampering(monkeypatch):
+    dsn = _postgres_dsn(monkeypatch)
+    conversation_id = uuid4()
+    record = ConversationRecord(
+        conversation_id=conversation_id,
+        source_system="synthetic-test",
+        source_conversation_id=f"source-{conversation_id}",
+        title="Synthetic tamper test",
+        capture_status="VERIFIED",
+        expected_message_count=1,
+    )
+    message = RawMessage(uuid4(), 0, "user", "original content")
+    save_conversation(record, [message])
+
+    with psycopg.connect(dsn) as conn:
+        conn.execute(
+            "UPDATE avc_messages SET content_raw=%s WHERE conversation_id=%s",
+            ("altered content", conversation_id),
+        )
+
+    restored = retrieve_conversation(conversation_id)
+    assert restored["integrity"]["all_message_hashes_valid"] is False
+    assert restored["integrity"]["manifest_valid"] is False
+    assert restored["integrity"]["complete"] is False
