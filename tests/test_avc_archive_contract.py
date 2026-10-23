@@ -1,0 +1,366 @@
+"""Tests de contrato AVC sin conexión ni datos reales."""
+
+from datetime import datetime, timezone
+from hashlib import sha256
+import os
+from pathlib import Path
+from uuid import uuid4
+
+import psycopg
+import pytest
+
+from core.avc_archive import (
+    AVCError,
+    ConversationRecord,
+    RawMessage,
+    _complete_sequence,
+    _manifest_hash,
+    _message_hash,
+    _validate_conversation_identity,
+    initialize_schema,
+    retrieve_conversation,
+    save_conversation,
+)
+
+
+def test_hash_preserves_exact_unicode_and_newlines():
+    message = RawMessage(
+        message_id=uuid4(),
+        sequence_no=0,
+        role="user",
+        content_raw="¿Qué reconocés?\r\n  acción 🧭 ",
+    )
+    expected = sha256(message.content_raw.encode("utf-8")).hexdigest()
+    assert _message_hash(message) == expected
+
+
+def test_empty_message_is_a_valid_source_message():
+    message = RawMessage(
+        message_id=uuid4(),
+        sequence_no=0,
+        role="assistant",
+        content_raw="",
+    )
+    assert _message_hash(message) == sha256(b"").hexdigest()
+
+
+def test_whitespace_changes_hash():
+    first = RawMessage(
+        message_id=uuid4(),
+        sequence_no=0,
+        role="user",
+        content_raw="texto",
+    )
+    second = RawMessage(
+        message_id=uuid4(),
+        sequence_no=0,
+        role="user",
+        content_raw=" texto ",
+    )
+    assert _message_hash(first) != _message_hash(second)
+
+
+@pytest.mark.parametrize(
+    ("expected", "sequences", "complete"),
+    [
+        (3, [0, 1, 2], True),
+        (3, [0, 2], False),
+        (2, [0, 1, 2], False),
+        (2, [1, 0], False),
+        (None, [0, 1], False),
+        (0, [], True),
+    ],
+)
+def test_sequence_coverage_requires_exact_zero_based_sequence(
+    expected,
+    sequences,
+    complete,
+):
+    assert _complete_sequence(expected, sequences) is complete
+
+
+def _manifest_fixture(content="texto original"):
+    conversation = {
+        "conversation_id": uuid4(),
+        "source_system": "synthetic-test",
+        "source_conversation_id": "source-1",
+        "title": "Conversación sintética",
+        "expected_message_count": 1,
+        "metadata": {"export_version": 1},
+    }
+    message = {
+        "message_id": uuid4(),
+        "sequence_no": 0,
+        "role": "user",
+        "content_raw": content,
+        "source_message_id": "message-1",
+        "source_created_at": datetime(2026, 10, 23, tzinfo=timezone.utc),
+        "metadata": {"synthetic": True},
+    }
+    return conversation, [message]
+
+
+def test_manifest_hash_is_deterministic():
+    conversation, messages = _manifest_fixture()
+    first = _manifest_hash(conversation, messages)
+    second = _manifest_hash(conversation, messages)
+    assert first == second
+
+
+def test_manifest_hash_changes_when_source_content_changes():
+    conversation, messages = _manifest_fixture()
+    original = _manifest_hash(conversation, messages)
+    changed = [dict(messages[0], content_raw="contenido modificado")]
+    assert _manifest_hash(conversation, changed) != original
+
+
+def test_versioned_schema_does_not_delete_messages_cascading_from_conversation():
+    migration = (
+        Path(__file__).resolve().parents[1] / "migrations" / "0003_avc_archive.sql"
+    ).read_text(encoding="utf-8")
+    assert "ON DELETE CASCADE" not in migration.upper()
+
+
+def test_save_rejects_out_of_order_messages_before_database_access(monkeypatch):
+    def fail_if_database_is_used():
+        pytest.fail("Database must not be accessed for invalid input")
+
+    monkeypatch.setattr("core.avc_archive.connection", fail_if_database_is_used)
+    record = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id="source-1",
+        title=None,
+        capture_status="PARTIAL",
+        expected_message_count=3,
+    )
+    messages = [
+        RawMessage(uuid4(), 2, "assistant", "second"),
+        RawMessage(uuid4(), 0, "user", "first"),
+    ]
+    with pytest.raises(AVCError, match="source order"):
+        save_conversation(record, messages)
+
+
+def _conversation_record(**overrides):
+    values = {
+        "conversation_id": uuid4(),
+        "source_system": "synthetic-test",
+        "source_conversation_id": "source-1",
+        "title": "Conversación sintética",
+        "capture_status": "PARTIAL",
+        "expected_message_count": 3,
+        "metadata": {"export_version": 1},
+    }
+    values.update(overrides)
+    return ConversationRecord(**values)
+
+
+def test_reimport_accepts_identical_conversation_header():
+    record = _conversation_record()
+    stored_header = (
+        record.source_system,
+        record.source_conversation_id,
+        record.title,
+        record.expected_message_count,
+        record.metadata,
+    )
+    _validate_conversation_identity(stored_header, record)
+
+
+@pytest.mark.parametrize(
+    ("field", "changed_value", "header_index"),
+    [
+        ("source_system", "another-source", 0),
+        ("source_conversation_id", "another-id", 1),
+        ("title", "Changed title", 2),
+        ("expected_message_count", 4, 3),
+        ("metadata", {"export_version": 2}, 4),
+    ],
+)
+def test_reimport_rejects_conflicting_conversation_header(
+    field,
+    changed_value,
+    header_index,
+):
+    record = _conversation_record()
+    stored_header = [
+        record.source_system,
+        record.source_conversation_id,
+        record.title,
+        record.expected_message_count,
+        record.metadata,
+    ]
+    stored_header[header_index] = changed_value
+
+    with pytest.raises(AVCError, match="source metadata conflict"):
+        _validate_conversation_identity(tuple(stored_header), record)
+
+
+def test_reimport_rejects_missing_conversation_header():
+    record = _conversation_record()
+    with pytest.raises(AVCError, match="source metadata conflict"):
+        _validate_conversation_identity(None, record)
+
+
+def _postgres_dsn(monkeypatch):
+    dsn = os.getenv("TEST_DATABASE_URL")
+    if not dsn:
+        pytest.skip("TEST_DATABASE_URL is not configured")
+    monkeypatch.setenv("DATABASE_URL", dsn)
+    initialize_schema()
+    return dsn
+
+
+def test_postgres_archive_round_trip_is_exact_and_idempotent(monkeypatch):
+    dsn = _postgres_dsn(monkeypatch)
+    conversation_id = uuid4()
+    record = ConversationRecord(
+        conversation_id=conversation_id,
+        source_system="synthetic-test",
+        source_conversation_id=f"source-{conversation_id}",
+        title="Synthetic conversation",
+        capture_status="VERIFIED",
+        expected_message_count=2,
+        metadata={"fixture": "synthetic"},
+    )
+    messages = [
+        RawMessage(
+            uuid4(),
+            0,
+            "user",
+            "¿Qué reconocés?\r\n  acción 🧭 ",
+            source_message_id="source-message-0",
+        ),
+        RawMessage(
+            uuid4(),
+            1,
+            "assistant",
+            "",
+            source_message_id="source-message-1",
+        ),
+    ]
+
+    assert save_conversation(record, messages) == 2
+    with psycopg.connect(dsn) as conn:
+        captured_before = conn.execute(
+            "SELECT captured_at FROM avc_conversations WHERE conversation_id=%s",
+            (conversation_id,),
+        ).fetchone()[0]
+
+    assert save_conversation(record, messages) == 2
+    with psycopg.connect(dsn) as conn:
+        captured_after = conn.execute(
+            "SELECT captured_at FROM avc_conversations WHERE conversation_id=%s",
+            (conversation_id,),
+        ).fetchone()[0]
+
+    restored = retrieve_conversation(conversation_id)
+    assert captured_after == captured_before
+    assert restored["integrity"]["complete"] is True
+    assert [message["content_raw"] for message in restored["messages"]] == [
+        "¿Qué reconocés?\r\n  acción 🧭 ",
+        "",
+    ]
+
+
+def test_postgres_archive_marks_missing_sequence_as_partial(monkeypatch):
+    _postgres_dsn(monkeypatch)
+    conversation_id = uuid4()
+    record = ConversationRecord(
+        conversation_id=conversation_id,
+        source_system="synthetic-test",
+        source_conversation_id=f"source-{conversation_id}",
+        title="Incomplete synthetic conversation",
+        capture_status="VERIFIED",
+        expected_message_count=3,
+    )
+    messages = [
+        RawMessage(uuid4(), 0, "user", "first"),
+        RawMessage(uuid4(), 2, "assistant", "third"),
+    ]
+
+    save_conversation(record, messages)
+    restored = retrieve_conversation(conversation_id)
+
+    assert restored["conversation"]["capture_status"] == "PARTIAL"
+    assert restored["integrity"]["sequence_complete"] is False
+    assert restored["integrity"]["complete"] is False
+
+
+def test_postgres_archive_detects_content_tampering(monkeypatch):
+    dsn = _postgres_dsn(monkeypatch)
+    conversation_id = uuid4()
+    record = ConversationRecord(
+        conversation_id=conversation_id,
+        source_system="synthetic-test",
+        source_conversation_id=f"source-{conversation_id}",
+        title="Synthetic tamper test",
+        capture_status="VERIFIED",
+        expected_message_count=1,
+    )
+    message = RawMessage(uuid4(), 0, "user", "original content")
+    save_conversation(record, [message])
+
+    with psycopg.connect(dsn) as conn:
+        conn.execute(
+            "UPDATE avc_messages SET content_raw=%s WHERE conversation_id=%s",
+            ("altered content", conversation_id),
+        )
+
+    restored = retrieve_conversation(conversation_id)
+    assert restored["integrity"]["all_message_hashes_valid"] is False
+    assert restored["integrity"]["manifest_valid"] is False
+    assert restored["integrity"]["complete"] is False
+
+
+def test_postgres_archive_rejects_duplicate_source_conversation_identity(monkeypatch):
+    dsn = _postgres_dsn(monkeypatch)
+    source_id = f"source-{uuid4()}"
+    first = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id=source_id,
+        title="Source identity test",
+        capture_status="VERIFIED",
+        expected_message_count=1,
+        metadata={"fixture": "synthetic"},
+    )
+    save_conversation(first, [RawMessage(uuid4(), 0, "user", "first")])
+
+    duplicate = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id=source_id,
+        title="Source identity test",
+        capture_status="VERIFIED",
+        expected_message_count=1,
+        metadata={"fixture": "synthetic"},
+    )
+    with pytest.raises(AVCError, match="source metadata conflict"):
+        save_conversation(duplicate, [RawMessage(uuid4(), 0, "user", "duplicate")])
+
+    with psycopg.connect(dsn) as conn:
+        count = conn.execute(
+            """SELECT count(*) FROM avc_conversations
+               WHERE source_system=%s AND source_conversation_id=%s""",
+            ("synthetic-test", source_id),
+        ).fetchone()[0]
+    assert count == 1
+
+
+def test_save_rejects_blank_source_conversation_id_before_database_access(monkeypatch):
+    def fail_if_database_is_used():
+        pytest.fail("Database must not be accessed for invalid source identity")
+
+    monkeypatch.setattr("core.avc_archive.connection", fail_if_database_is_used)
+    record = ConversationRecord(
+        conversation_id=uuid4(),
+        source_system="synthetic-test",
+        source_conversation_id="   ",
+        title=None,
+        capture_status="PARTIAL",
+        expected_message_count=0,
+    )
+    with pytest.raises(AVCError, match="source_conversation_id cannot be blank"):
+        save_conversation(record, [])
