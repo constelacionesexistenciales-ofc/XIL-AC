@@ -32,15 +32,28 @@ def test_migrations_apply_idempotently_to_postgresql(monkeypatch):
             "SELECT version FROM schema_migrations WHERE version = %s",
             ("0002_rate_limit_buckets",),
         ).fetchone()
+        avc_version = conn.execute(
+            "SELECT version FROM schema_migrations WHERE version = %s",
+            ("0003_avc_archive",),
+        ).fetchone()
         table = conn.execute("SELECT to_regclass('public.audit_events')").fetchone()
         rate_limit_table = conn.execute(
             "SELECT to_regclass('public.rate_limit_buckets')"
         ).fetchone()
+        avc_conversations = conn.execute(
+            "SELECT to_regclass('public.avc_conversations')"
+        ).fetchone()
+        avc_messages = conn.execute(
+            "SELECT to_regclass('public.avc_messages')"
+        ).fetchone()
 
     assert version == ("0001_initial",)
     assert rate_limit_version == ("0002_rate_limit_buckets",)
+    assert avc_version == ("0003_avc_archive",)
     assert table == ("audit_events",)
     assert rate_limit_table == ("rate_limit_buckets",)
+    assert avc_conversations == ("avc_conversations",)
+    assert avc_messages == ("avc_messages",)
 
 
 def test_audit_event_persists_without_session_content(monkeypatch):
