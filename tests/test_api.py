@@ -125,3 +125,34 @@ def test_oidc_missing_configuration_fails_closed(monkeypatch):
         json={"text": "texto privado"},
     )
     assert response.status_code == 503
+
+
+def test_process_fails_closed_when_privacy_detector_raises(monkeypatch):
+    monkeypatch.setenv("XILAC_API_TOKEN", "test-secret")
+    monkeypatch.setattr(
+        api,
+        "settings",
+        Settings(cfe_session_processing_enabled=True),
+    )
+
+    def fail_detector(_text):
+        raise RuntimeError("internal detector secret")
+
+    audit_calls = []
+    monkeypatch.setattr(api, "detect_sensitive_content", fail_detector)
+    monkeypatch.setattr(
+        api,
+        "record_audit_event",
+        lambda *args: audit_calls.append(args),
+    )
+    response = client.post(
+        "/v1/process",
+        headers={"Authorization": "Bearer test-secret"},
+        json={"text": "texto sintético de prueba"},
+    )
+
+    assert response.status_code == 423
+    assert response.json()["status"] == "privacy_check_failed"
+    assert response.json()["code"] == "PRIVACY_CHECK_FAILED"
+    assert "internal detector secret" not in response.text
+    assert audit_calls == []
