@@ -14,6 +14,7 @@ from core.avc_archive import (
     _complete_sequence,
     _manifest_hash,
     _message_hash,
+    _validate_conversation_identity,
     save_conversation,
 )
 
@@ -132,3 +133,64 @@ def test_save_rejects_out_of_order_messages_before_database_access(monkeypatch):
     ]
     with pytest.raises(AVCError, match="source order"):
         save_conversation(record, messages)
+
+
+def _conversation_record(**overrides):
+    values = {
+        "conversation_id": uuid4(),
+        "source_system": "synthetic-test",
+        "source_conversation_id": "source-1",
+        "title": "Conversación sintética",
+        "capture_status": "PARTIAL",
+        "expected_message_count": 3,
+        "metadata": {"export_version": 1},
+    }
+    values.update(overrides)
+    return ConversationRecord(**values)
+
+
+def test_reimport_accepts_identical_conversation_header():
+    record = _conversation_record()
+    stored_header = (
+        record.source_system,
+        record.source_conversation_id,
+        record.title,
+        record.expected_message_count,
+        record.metadata,
+    )
+    _validate_conversation_identity(stored_header, record)
+
+
+@pytest.mark.parametrize(
+    ("field", "changed_value", "header_index"),
+    [
+        ("source_system", "another-source", 0),
+        ("source_conversation_id", "another-id", 1),
+        ("title", "Changed title", 2),
+        ("expected_message_count", 4, 3),
+        ("metadata", {"export_version": 2}, 4),
+    ],
+)
+def test_reimport_rejects_conflicting_conversation_header(
+    field,
+    changed_value,
+    header_index,
+):
+    record = _conversation_record()
+    stored_header = [
+        record.source_system,
+        record.source_conversation_id,
+        record.title,
+        record.expected_message_count,
+        record.metadata,
+    ]
+    stored_header[header_index] = changed_value
+
+    with pytest.raises(AVCError, match="source metadata conflict"):
+        _validate_conversation_identity(tuple(stored_header), record)
+
+
+def test_reimport_rejects_missing_conversation_header():
+    record = _conversation_record()
+    with pytest.raises(AVCError, match="source metadata conflict"):
+        _validate_conversation_identity(None, record)
