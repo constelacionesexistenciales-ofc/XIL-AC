@@ -40,7 +40,7 @@ La aplicación no obtiene por defecto acceso general al historial de la cuenta d
 10. Evidencia de despliegue y pruebas de aceptación antes de habilitar datos reales.
 
 ## Integración inicial
-`core/avc_archive.py` ofrece funciones de persistencia/recuperación para PostgreSQL. El despliegue debe ejecutar explícitamente `initialize_schema()` como paso controlado de migración, no al arrancar cada petición. La interfaz, el importador oficial de exportaciones ChatGPT, el RBAC por conversación, la política de retención y las pruebas de integración deben completarse antes de producción.
+`core/avc_archive.py` ofrece funciones de persistencia/recuperación para PostgreSQL. El esquema se define en la migración versionada `migrations/0003_avc_archive.sql`; `initialize_schema()` delega en el ejecutor numerado `scripts/migrate.py` y debe ejecutarse solo como paso controlado de despliegue, nunca en cada petición. La interfaz, el importador oficial de exportaciones ChatGPT, el RBAC por conversación, la política de retención y la evidencia de pruebas de integración/restauración deben completarse antes de producción.
 
 ## Reglas adicionales de integridad y conservación
 
@@ -70,8 +70,4 @@ La aplicación no obtiene por defecto acceso general al historial de la cuenta d
 
 ## Evidencia de validación
 
-La validación de esta PR requiere que CI ejecute Ruff y todas las pruebas de
-contrato. Las pruebas unitarias sin PostgreSQL no sustituyen las pruebas de
-transacción, conflicto, idempotencia, recuperación y restauración. No declarar
-la implementación validada hasta que esas pruebas se ejecuten y sus resultados
-queden asociados al commit revisado.
+La suite de AVC incluye pruebas sintéticas de contrato y pruebas de integración PostgreSQL para recuperación exacta, idempotencia, conservación de `captured_at`, secuencias incompletas y detección de alteración de contenido. CI debe ejecutar Ruff, migraciones y la suite completa. Las pruebas de integración no sustituyen una prueba de backup/restauración ni validan el despliegue de producción. No declarar la implementación validada hasta que los resultados queden asociados al commit revisado.
