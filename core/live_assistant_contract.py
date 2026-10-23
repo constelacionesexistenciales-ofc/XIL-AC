@@ -172,9 +172,9 @@ def parse_live_suggestion(payload: Mapping[str, Any]) -> LiveSuggestion:
         alternative = _text(
             item["alternative"], f"hypotheses[{index}].alternative", optional=True, limit=400
         )
-        if status == "open" and not missing:
+        if not missing:
             raise SuggestionContractError(
-                f"hypotheses[{index}] marked open must state missing evidence"
+                f"hypotheses[{index}] must state missing evidence for every status"
             )
         hypotheses.append(
             Hypothesis(

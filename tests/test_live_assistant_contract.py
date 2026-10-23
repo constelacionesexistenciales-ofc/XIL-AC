@@ -78,11 +78,29 @@ def test_suggestion_requires_evidence_and_exploration():
         parse_live_suggestion(payload)
 
 
-def test_open_hypothesis_requires_missing_evidence():
+@pytest.mark.parametrize(
+    "status", ["open", "supported", "contradicted", "discarded"]
+)
+def test_every_hypothesis_status_requires_missing_evidence(status):
     payload = valid_payload()
+    payload["hypotheses"][0]["status"] = status
     payload["hypotheses"][0]["missing_evidence"] = []
-    with pytest.raises(SuggestionContractError, match="must state missing evidence"):
+    with pytest.raises(
+        SuggestionContractError, match="must state missing evidence for every status"
+    ):
         parse_live_suggestion(payload)
+
+
+@pytest.mark.parametrize(
+    "status", ["open", "supported", "contradicted", "discarded"]
+)
+def test_every_hypothesis_status_accepts_explicit_missing_evidence(status):
+    payload = valid_payload()
+    payload["hypotheses"][0]["status"] = status
+    payload["hypotheses"][0]["missing_evidence"] = ["Dato aún no comprobado."]
+    result = parse_live_suggestion(payload)
+    assert result.hypotheses[0].status == status
+    assert result.hypotheses[0].missing_evidence == ("Dato aún no comprobado.",)
 
 
 def test_pending_question_requires_wait_mode():
