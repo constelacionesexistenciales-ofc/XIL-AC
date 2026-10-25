@@ -28,7 +28,9 @@ _TOP_KEYS = {
 _QUESTION_KEYS = {"primary", "alternatives"}
 _EVIDENCE_KEYS = {"kind", "text", "source_turn"}
 _PHENOMENOLOGICAL_KEYS = {"focus", "proposal"}
-_HYPOTHESIS_KEYS = {"text", "status", "evidence_for", "missing_evidence", "alternative"}
+_HYPOTHESIS_KEYS = {
+    "text", "status", "evidence_for", "evidence_against", "missing_evidence", "alternative"
+}
 _PROVENANCE_KEYS = {"policy_version", "prompt_version", "model_version"}
 _MODES = {"suggest", "wait", "blocked"}
 _EVIDENCE_KINDS = {"fact", "observation", "unknown"}
@@ -51,6 +53,7 @@ class Hypothesis:
     text: str
     status: HypothesisStatus
     evidence_for: tuple[str, ...]
+    evidence_against: tuple[str, ...]
     missing_evidence: tuple[str, ...]
     alternative: str | None
 
@@ -115,7 +118,7 @@ def parse_live_suggestion(payload: Mapping[str, Any]) -> LiveSuggestion:
     """Validate and normalize a model output; never execute or persist its contents."""
     data = _mapping(payload, "payload", _TOP_KEYS)
     version = _text(data["schema_version"], "schema_version", limit=20)
-    if version != "1.0":
+    if version != "1.1":
         raise SuggestionContractError("unsupported schema_version")
 
     mode = _text(data["mode"], "mode", limit=20)
@@ -166,19 +169,30 @@ def parse_live_suggestion(payload: Mapping[str, Any]) -> LiveSuggestion:
         evidence_for = _string_list(
             item["evidence_for"], f"hypotheses[{index}].evidence_for", maximum=5
         )
+        evidence_against = _string_list(
+            item["evidence_against"], f"hypotheses[{index}].evidence_against", maximum=5
+        )
         missing = _string_list(
             item["missing_evidence"], f"hypotheses[{index}].missing_evidence", maximum=5
         )
         alternative = _text(
             item["alternative"], f"hypotheses[{index}].alternative", optional=True, limit=400
         )
+        if status == "supported" and not evidence_for:
+            raise SuggestionContractError(
+                f"hypotheses[{index}] marked supported must state evidence_for"
+            )
+        if status == "contradicted" and not evidence_against:
+            raise SuggestionContractError(
+                f"hypotheses[{index}] marked contradicted must state evidence_against"
+            )
         if not missing:
             raise SuggestionContractError(
                 f"hypotheses[{index}] must state missing evidence for every status"
             )
         hypotheses.append(
             Hypothesis(
-                statement, status, evidence_for, missing, alternative  # type: ignore[arg-type]
+                statement, status, evidence_for, evidence_against, missing, alternative  # type: ignore[arg-type]
             )
         )
 
