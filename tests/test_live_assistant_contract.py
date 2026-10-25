@@ -65,6 +65,14 @@ def test_unknown_top_level_field_is_rejected():
         parse_live_suggestion(payload)
 
 
+def test_mixed_non_string_keys_are_rejected_as_contract_errors():
+    payload = valid_payload()
+    payload["unexpected"] = "extra string key"
+    payload[1] = "non-string key"
+    with pytest.raises(SuggestionContractError, match="keys must be strings"):
+        parse_live_suggestion(payload)
+
+
 def test_more_than_two_alternatives_is_rejected():
     payload = valid_payload()
     payload["question"]["alternatives"] = ["A", "B", "C"]
