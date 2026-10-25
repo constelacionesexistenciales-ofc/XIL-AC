@@ -77,6 +77,8 @@ class LiveSuggestion:
 def _mapping(value: object, field: str, expected_keys: set[str]) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise SuggestionContractError(f"{field} must be an object")
+    if not all(isinstance(key, str) for key in value):
+        raise SuggestionContractError(f"{field} keys must be strings")
     keys = set(value.keys())
     if keys != expected_keys:
         missing = expected_keys - keys
@@ -84,8 +86,6 @@ def _mapping(value: object, field: str, expected_keys: set[str]) -> Mapping[str,
         raise SuggestionContractError(
             f"{field} keys invalid (missing={sorted(missing)}, extra={sorted(extra)})"
         )
-    if not all(isinstance(key, str) for key in value):
-        raise SuggestionContractError(f"{field} keys must be strings")
     return value
 
 
