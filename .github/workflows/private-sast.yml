@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, 'feat/**', 'feature/**', 'audit/**', 'security/**']
   pull_request:
-    branches: [main, 'feat/**', 'feature/**', 'audit/**', 'security/**']
+    branches: [main, 'feat/**', 'feature/**', 'audit/**', 'security/**', 'fix/**']
   workflow_dispatch:
   schedule:
     - cron: "30 6 * * 1"
