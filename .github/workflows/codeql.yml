@@ -26,8 +26,9 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: python
-      # Upload SARIF so this workflow publishes its CodeQL findings in code scanning.
+      # Repository default setup is enabled; avoid uploading a duplicate advanced-config SARIF.
+      # Default setup remains responsible for publishing code-scanning results.
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
         with:
-          upload: true
+          upload: false
