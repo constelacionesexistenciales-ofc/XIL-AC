@@ -14,7 +14,7 @@
 - [x] Digest inmutable de imagen base, escaneo de imagen, generación de SBOM CycloneDX y prueba de salud en CI (PR #62).
 
 ## Bloqueos antes de exponer a usuarios
-- [ ] Integrar la inspección local previa al envío en el cliente/interfaz. Existe una utilidad CLI inicial (`python -m scripts.privacy_preflight`), pero no está integrada automáticamente con una interfaz ni bloquea a otros clientes.
+- [ ] Integrar una única puerta de salida local previa a cualquier transmisión y hacer que todos los clientes XIL-AC la utilicen. Existen tres herramientas independientes (CLI, página HTML local y prototipo Windows), pero ninguna intercepta el tráfico de otros clientes ni está conectada al flujo de salida HTTP del backend.
 - [ ] Medir falsos positivos y falsos negativos con un conjunto sintético representativo.
 - [ ] Configurar y verificar un proveedor OIDC real y limitar el acceso operativo a la identidad autorizada.
 - [ ] Configurar protección efectiva de `main`: exigir PR, checks de CI/SAST/CodeQL, resolver conversaciones y bloquear force-push y borrado. La lectura del repositorio devolvió cero rulesets; la API de protección de rama no fue accesible con la integración actual. No se afirma que la protección esté configurada.
@@ -26,12 +26,14 @@
 - [ ] Probar copias de seguridad, restauración, permisos, aislamiento, seguridad y carga.
 - [ ] Verificar controles de red y SSRF/DNS rebinding, incluidos destinos privados y redirecciones.
 - [ ] Desplegar en infraestructura real y verificar TLS, base de datos y recuperación.
+- [ ] Ejecutar instalación, ejecución, desinstalación, revisión de permisos, verificación de ausencia de red y análisis de binarios del prototipo Windows en un equipo de prueba; firmar binarios antes de cualquier distribución.
 - [ ] Obtener aprobación humana explícita antes de habilitar el uso real.
 
 ## Limitaciones conocidas
 - El detector es heurístico; no garantiza detectar todo dato sensible ni determina que el contenido sea seguro.
 - La detección dentro de la API ocurre después de que el texto llegó al servidor; no evita la transmisión inicial.
 - La CLI de privacidad siempre devuelve bloqueo; no es una autorización ni un mecanismo de anonimización.
+- La página HTML local y la Puerta Local de Windows tampoco autorizan envíos ni interceptan otras aplicaciones; son herramientas independientes, con alcance limitado al contenido revisado dentro de ellas.
 - `POST /v1/process` responde HTTP 423 mientras la compuerta está cerrada. El motor no conectado no debe considerarse funcional.
 - No hay gestor de secretos ni despliegue cloud verificado.
 - Un archivo de configuración de despliegue no prueba que el servicio esté publicado, privado ni protegido correctamente.
