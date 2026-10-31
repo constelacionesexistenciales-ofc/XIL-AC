@@ -11,7 +11,7 @@ from core.live_assistant_contract import (
 
 def valid_payload():
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "mode": "suggest",
         "question": {
             "primary": "¿Qué notás en vos antes de decidir?",
@@ -33,6 +33,7 @@ def valid_payload():
                 "text": "La anticipación podría influir en su decisión.",
                 "status": "open",
                 "evidence_for": ["La persona relata dudas previas."],
+                "evidence_against": [],
                 "missing_evidence": ["Qué piensa y siente en ese momento."],
                 "alternative": "La decisión también podría depender del contexto.",
             }
@@ -64,6 +65,14 @@ def test_unknown_top_level_field_is_rejected():
         parse_live_suggestion(payload)
 
 
+def test_mixed_non_string_keys_are_rejected_as_contract_errors():
+    payload = valid_payload()
+    payload["unexpected"] = "extra string key"
+    payload[1] = "non-string key"
+    with pytest.raises(SuggestionContractError, match="keys must be strings"):
+        parse_live_suggestion(payload)
+
+
 def test_more_than_two_alternatives_is_rejected():
     payload = valid_payload()
     payload["question"]["alternatives"] = ["A", "B", "C"]
@@ -84,6 +93,8 @@ def test_suggestion_requires_evidence_and_exploration():
 def test_every_hypothesis_status_requires_missing_evidence(status):
     payload = valid_payload()
     payload["hypotheses"][0]["status"] = status
+    if status == "contradicted":
+        payload["hypotheses"][0]["evidence_against"] = ["Un dato contradice la hipótesis."]
     payload["hypotheses"][0]["missing_evidence"] = []
     with pytest.raises(
         SuggestionContractError, match="must state missing evidence for every status"
@@ -97,11 +108,37 @@ def test_every_hypothesis_status_requires_missing_evidence(status):
 def test_every_hypothesis_status_accepts_explicit_missing_evidence(status):
     payload = valid_payload()
     payload["hypotheses"][0]["status"] = status
+    if status == "contradicted":
+        payload["hypotheses"][0]["evidence_against"] = ["Un dato contradice la hipótesis."]
     payload["hypotheses"][0]["missing_evidence"] = ["Dato aún no comprobado."]
     result = parse_live_suggestion(payload)
     assert result.hypotheses[0].status == status
     assert result.hypotheses[0].missing_evidence == ("Dato aún no comprobado.",)
+    if status == "contradicted":
+        assert result.hypotheses[0].evidence_against == ("Un dato contradice la hipótesis.",)
 
+
+
+@pytest.mark.parametrize(
+    ("status", "field", "error"),
+    [
+        ("supported", "evidence_for", "must state evidence_for"),
+        ("contradicted", "evidence_against", "must state evidence_against"),
+    ],
+)
+def test_resolved_hypothesis_status_requires_matching_evidence(status, field, error):
+    payload = valid_payload()
+    payload["hypotheses"][0]["status"] = status
+    payload["hypotheses"][0][field] = []
+    with pytest.raises(SuggestionContractError, match=error):
+        parse_live_suggestion(payload)
+
+
+def test_schema_version_1_0_is_rejected_after_evidence_contract_upgrade():
+    payload = valid_payload()
+    payload["schema_version"] = "1.0"
+    with pytest.raises(SuggestionContractError, match="unsupported schema_version"):
+        parse_live_suggestion(payload)
 
 def test_pending_question_requires_wait_mode():
     payload = valid_payload()

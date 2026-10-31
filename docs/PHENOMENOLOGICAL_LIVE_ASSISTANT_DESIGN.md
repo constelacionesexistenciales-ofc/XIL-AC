@@ -49,14 +49,14 @@ El orden de seguridad es: autorización → control local previo a red → polí
 
 El esquema final debe adaptarse al stack y a las convenciones existentes. Este contrato describe los campos semánticos esperados, no impone todavía una biblioteca concreta.
 
-- `schema_version`: versión explícita del contrato.
+- `schema_version`: versión explícita del contrato; esta revisión eleva el esquema a `1.1`.
 - `mode`: `suggest`, `wait` o `blocked`.
 - `question.primary`: una pregunta o null.
 - `question.alternatives`: lista de cero a dos preguntas.
 - `evidence.items`: datos/expresiones breves y localizables en el contexto autorizado; sin citas extensas innecesarias.
 - `phenomenological.focus`: aspecto a explorar expresado en lenguaje claro.
 - `phenomenological.prompt`: propuesta de exploración que el facilitador puede aceptar, editar o descartar.
-- `hypotheses.items`: hipótesis opcionales con estado, evidencia a favor, evidencia faltante y alternativa plausible cuando corresponda.
+- `hypotheses.items`: hipótesis opcionales con estado, evidencia a favor (`evidence_for`), evidencia en contra (`evidence_against`), evidencia faltante y alternativa plausible cuando corresponda.
 - `pending_question`: booleano/estado más la pregunta pendiente si se conoce.
 - `risk_flags`: códigos de política, no texto clínico libre.
 - `abstention.reason`: razón acotada cuando el modo es wait/blocked.
@@ -66,6 +66,8 @@ Reglas de validación:
 - En modo `wait` o `blocked`, no se exige pregunta principal ni propuesta.
 - Máximo una pregunta principal y dos alternativas.
 - Toda hipótesis debe ser opcional, marcada como hipótesis y contener qué falta comprobar.
+- El estado `supported` exige evidencia a favor explícita; `contradicted` exige evidencia en contra explícita. El estado no sustituye la evidencia.
+- La versión `1.1` incorpora `evidence_against`; consumidores de la versión `1.0` deben migrar antes de adoptar este contrato.
 - Ningún campo libre puede habilitar herramientas, cambiar flags, seleccionar proveedores o ejecutar acciones.
 - Campos desconocidos, estructura inválida o límites excedidos => rechazar salida y presentar fallback seguro.
 - El validador no debe “reparar” contenido inventando semántica.
