@@ -23,15 +23,15 @@ El detector identifica señales explícitas como correos, teléfonos, documentos
 
 `CFE_SESSION_PROCESSING_ENABLED=false` por defecto. `POST /v1/process` devuelve HTTP 423 cuando detecta señales sensibles o mientras el procesamiento esté deshabilitado. El motor CFE sigue sin estar conectado y no hay despliegue cloud verificado. Consultar [Política operativa CFE](docs/CFE_OPERATING_POLICY.md), [plan del motor de investigación](docs/RESEARCH_ENGINE_PLAN.md) y [Puerta de producción](docs/PRODUCTION_GATE.md).
 
-## Inspección local preventiva de privacidad
+## Herramientas locales de revisión de privacidad
 
-Hay una utilidad CLI de inspección local que no realiza conexiones de red y no imprime el texto recibido:
+XIL-AC contiene tres herramientas locales iniciales, independientes entre sí:
 
-```bash
-python -m scripts.privacy_preflight < texto.txt
-```
+1. **CLI:** `python -m scripts.privacy_preflight < texto.txt`. Lee stdin, no imprime el texto, devuelve categorías y siempre termina con código 2 (bloqueado), incluso si no detecta señales.
+2. **Página HTML local:** `local-privacy-review/index.html`. Revisa texto en memoria del navegador; su CSP establece `connect-src 'none'` y el archivo no contiene llamadas de red ni almacenamiento web.
+3. **Puerta Local para Windows:** `desktop-gateway/`. Prototipo de escritorio sin cliente HTTP ni transmisión remota; usa credenciales locales y DPAPI en Windows.
 
-La utilidad **siempre bloquea la transmisión** y devuelve código de salida `2`, tanto si detecta señales como si no las detecta. Devuelve categorías y nivel de riesgo; un resultado sin señales explícitas no demuestra que el texto esté libre de datos sensibles. Un error del detector también bloquea. No interpretar nunca el resultado como autorización para enviar. Esta utilidad no está integrada automáticamente con una interfaz ni sustituye la compuerta remota.
+**Límite común:** son herramientas independientes. Ninguna está conectada al flujo de salida HTTP del backend ni intercepta a otras aplicaciones/clientes. No constituyen una puerta de salida universal y no pueden impedir que otro programa envíe texto por su cuenta. La falta de señales explícitas nunca certifica anonimización ni seguridad. El prototipo Windows todavía requiere instalación, ejecución, desinstalación y revisión manual en un equipo de prueba; no debe distribuirse como producto terminado.
 
 ## Inicio local con Docker
 1. Copiar `.env.example` a `.env`.
