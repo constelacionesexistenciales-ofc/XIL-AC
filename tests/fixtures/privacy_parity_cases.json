@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Corpus 100% sintético para comprobar paridad de riesgo entre detectores locales. No autoriza transmisión.",
+  "cases": [
+    {
+      "id": "empty",
+      "text": "   ",
+      "risk": "unknown",
+      "core_categories": [
+        "contenido_no_verificable"
+      ],
+      "desktop_labels": [
+        "empty_or_unverifiable"
+      ],
+      "desktop_decision": "REVIEW_REQUIRED",
+      "html_class": "result medium",
+      "html_labels": []
+    },
+    {
+      "id": "neutral",
+      "text": "Quiero investigar cómo se construyen las decisiones en los vínculos.",
+      "risk": "no_signal_detected",
+      "core_categories": [],
+      "desktop_labels": [],
+      "desktop_decision": "REVIEW_REQUIRED",
+      "html_class": "result none",
+      "html_labels": []
+    },
+    {
+      "id": "email",
+      "text": "Contacto: persona-sintetica@example.invalid",
+      "risk": "medium",
+      "core_categories": [
+        "identificador_directo"
+      ],
+      "desktop_labels": [
+        "correo electrónico"
+      ],
+      "desktop_decision": "REVIEW_REQUIRED",
+      "html_class": "result medium",
+      "html_labels": [
+        "correo electrónico"
+      ]
+    },
+    {
+      "id": "clinical-only",
+      "text": "La persona menciona diagnóstico y medicación.",
+      "risk": "medium",
+      "core_categories": [
+        "informacion_de_salud"
+      ],
+      "desktop_labels": [
+        "información de salud"
+      ],
+      "desktop_decision": "REVIEW_REQUIRED",
+      "html_class": "result medium",
+      "html_labels": [
+        "información de salud"
+      ]
+    },
+    {
+      "id": "high-sensitivity",
+      "text": "La persona menciona ideación suicida.",
+      "risk": "high",
+      "core_categories": [
+        "informacion_de_alta_sensibilidad"
+      ],
+      "desktop_labels": [
+        "riesgo autolesivo"
+      ],
+      "desktop_decision": "DENY",
+      "html_class": "result high",
+      "html_labels": [
+        "riesgo autolesivo"
+      ]
+    },
+    {
+      "id": "email-plus-health",
+      "text": "Contacto: persona-sintetica@example.invalid. Tiene diagnóstico y medicación.",
+      "risk": "high",
+      "core_categories": [
+        "identificador_directo",
+        "informacion_de_salud"
+      ],
+      "desktop_labels": [
+        "correo electrónico",
+        "información de salud"
+      ],
+      "desktop_decision": "DENY",
+      "html_class": "result high",
+      "html_labels": [
+        "correo electrónico",
+        "información de salud"
+      ]
+    },
+    {
+      "id": "name-plus-intimacy",
+      "text": "Nombre completo: Persona Ejemplo. Refiere vida sexual.",
+      "risk": "high",
+      "core_categories": [
+        "identificador_directo",
+        "informacion_intima"
+      ],
+      "desktop_labels": [
+        "nombre etiquetado",
+        "sexualidad o intimidad"
+      ],
+      "desktop_decision": "DENY",
+      "html_class": "result high",
+      "html_labels": [
+        "nombre etiquetado",
+        "sexualidad o intimidad"
+      ]
+    },
+    {
+      "id": "name-plus-location",
+      "text": "Nombre completo: Persona Ejemplo. Domicilio: Calle Falsa 123.",
+      "risk": "high",
+      "core_categories": [
+        "identificador_directo",
+        "ubicacion_personal"
+      ],
+      "desktop_labels": [
+        "nombre etiquetado",
+        "domicilio etiquetado"
+      ],
+      "desktop_decision": "DENY",
+      "html_class": "result high",
+      "html_labels": [
+        "nombre etiquetado",
+        "domicilio etiquetado"
+      ]
+    },
+    {
+      "id": "intimacy-only",
+      "text": "La persona describe su vida sexual.",
+      "risk": "medium",
+      "core_categories": [
+        "informacion_intima"
+      ],
+      "desktop_labels": [
+        "sexualidad o intimidad"
+      ],
+      "desktop_decision": "REVIEW_REQUIRED",
+      "html_class": "result medium",
+      "html_labels": [
+        "sexualidad o intimidad"
+      ]
+    }
+  ]
+}
