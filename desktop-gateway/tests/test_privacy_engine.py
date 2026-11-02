@@ -15,6 +15,13 @@ class PrivacyEngineTests(unittest.TestCase):
         self.assertEqual(result.decision, "DENY")
         self.assertEqual(result.risk, "high")
 
+    def test_identifier_with_sensitive_context_is_denied(self):
+        result = review_text(
+            "Nombre completo: Persona Ejemplo. Tiene diagnóstico y medicación."
+        )
+        self.assertEqual(result.decision, "DENY")
+        self.assertEqual(result.risk, "high")
+
     def test_neutral_text_still_cannot_be_sent(self):
         result = review_text("Quiero investigar cómo se construyen las decisiones en los vínculos.")
         self.assertEqual(result.decision, "REVIEW_REQUIRED")
