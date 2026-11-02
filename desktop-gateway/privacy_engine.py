@@ -4,12 +4,14 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class Review:
     decision: str
     risk: str
     categories: tuple[str, ...]
     message: str
+
 
 _RULES: tuple[tuple[str, str, str], ...] = (
     ("correo electrónico", "identificador directo", r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"),
@@ -26,6 +28,7 @@ _RULES: tuple[tuple[str, str, str], ...] = (
 )
 _COMPILED = tuple((label, category, re.compile(pattern, re.IGNORECASE)) for label, category, pattern in _RULES)
 
+
 def review_text(text: str) -> Review:
     """Clasifica sin conservar ni devolver los valores encontrados.
 
@@ -33,21 +36,43 @@ def review_text(text: str) -> Review:
     transmitir contenido: la política inicial es siempre sin transmisión.
     """
     if not isinstance(text, str) or not text.strip():
-        return Review("REVIEW_REQUIRED", "unknown", ("empty_or_unverifiable",),
-                      "No hay contenido suficiente para revisar. No se habilita ninguna operación remota.")
+        return Review(
+            "REVIEW_REQUIRED",
+            "unknown",
+            ("empty_or_unverifiable",),
+            "No hay contenido suficiente para revisar. No se habilita ninguna operación remota.",
+        )
+
     findings = [(label, category) for label, category, pattern in _COMPILED if pattern.search(text)]
-    categories = tuple(sorted({category for _, category in findings}))
-    if "alta sensibilidad" in categories:
+    labels = tuple(label for label, _ in findings)
+    categories = {category for _, category in findings}
+
+    has_high_sensitivity = "alta sensibilidad" in categories
+    has_direct_identifier = "identificador directo" in categories
+    has_sensitive_context = bool(
+        categories.intersection(
+            {"información de salud", "información íntima", "ubicación personal"}
+        )
+    )
+    high_risk = has_high_sensitivity or (has_direct_identifier and has_sensitive_context)
+
+    if high_risk:
         risk = "high"
         decision = "DENY"
-        message = "Señales de alta sensibilidad. No compartir ni enviar este contenido."
+        message = "Señales de riesgo elevado. No compartir ni enviar este contenido."
     elif findings:
         risk = "medium"
         decision = "REVIEW_REQUIRED"
-        message = "Se detectaron posibles datos sensibles. Revisá y minimizá manualmente; no se permite envío remoto."
+        message = (
+            "Se detectaron posibles datos sensibles. Revisá y minimizá manualmente; "
+            "no se permite envío remoto."
+        )
     else:
         risk = "no_signal_detected"
         decision = "REVIEW_REQUIRED"
-        message = "No se detectaron señales explícitas. Esto no prueba que el texto sea anónimo o seguro; la transmisión sigue bloqueada."
-    return Review(decision, risk, tuple(label for label, _ in findings),
-                  message)
+        message = (
+            "No se detectaron señales explícitas. Esto no prueba que el texto sea "
+            "anónimo o seguro; la transmisión sigue bloqueada."
+        )
+
+    return Review(decision, risk, labels, message)
