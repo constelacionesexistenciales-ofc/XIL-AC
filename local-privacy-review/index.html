@@ -85,7 +85,12 @@ document.getElementById("scan").addEventListener("click", () => {
     return;
   }
   const findings = rules.filter(rule => rule[1].test(text));
-  const high = findings.some(f => f[2] === "información de alta sensibilidad");
+  const hasHighSensitivity = findings.some(f => f[2] === "información de alta sensibilidad");
+  const hasDirectIdentifier = findings.some(f => f[2] === "identificador directo");
+  const hasSensitiveContext = findings.some(f =>
+    ["información de salud", "información íntima", "ubicación personal"].includes(f[2])
+  );
+  const high = hasHighSensitivity || (hasDirectIdentifier && hasSensitiveContext);
   result.className = "result " + (findings.length ? (high ? "high" : "medium") : "none");
   const pill = document.createElement("span");
   pill.className = "pill";
