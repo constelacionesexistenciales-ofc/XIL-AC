@@ -30,17 +30,20 @@ pyinstaller --noconfirm --clean --onefile --windowed --name XILAC-PuertaLocal ma
 ```
 El ejecutable quedará en `dist\\XILAC-PuertaLocal.exe`.
 
-Para generar el instalador, instalar Inno Setup y compilar:
+Para generar el instalador, instalar Inno Setup 6.3 o posterior y compilar:
 ```powershell
 iscc installer.iss
 ```
 El instalador quedará en `dist\\XILAC-PuertaLocal-Setup.exe`.
+
+El instalador se limita a sistemas compatibles con ejecutables x64 y configura el modo de instalación de 64 bits. Esto incluye Windows x64 y Windows 11 ARM64 con emulación x64 disponible. La compatibilidad real de instalación y ejecución en equipos ARM64 todavía requiere validación manual; Windows ARM64 anterior sin emulación x64 y Windows de 32 bits no están admitidos.
 
 ## Comprobaciones necesarias
 - Ejecutar pruebas unitarias.
 - Abrir el programa en Windows y probar configuración inicial, acceso con contraseña, acceso con PIN y bloqueo por intentos.
 - Verificar con monitorización del sistema que el proceso no realiza conexiones de red.
 - Probar instalación, desinstalación y ejecución con permisos de usuario estándar.
+- Validar en Windows x64 y, cuando esté disponible, Windows 11 ARM64 con emulación x64.
 - Analizar el ejecutable y el instalador con herramientas de seguridad.
 - Firmar los binarios antes de distribución real.
 
